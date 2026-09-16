@@ -1,0 +1,1 @@
+openai_key = 'sk-proj-your_openai_api_key_here'

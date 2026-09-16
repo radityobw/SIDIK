@@ -1,0 +1,6 @@
+[project]
+name = "app-dep_dev_pos_010"
+version = "0.1.0"
+dependencies = [
+    "sqlparse==0.4.3"
+]

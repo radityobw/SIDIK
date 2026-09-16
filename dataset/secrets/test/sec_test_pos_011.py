@@ -1,0 +1,1 @@
+aws_key = 'AKIAA27F8LWVV59HOTGD'

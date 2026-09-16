@@ -1,0 +1,6 @@
+[project]
+name = "app-dep_test_pos_014"
+version = "0.1.0"
+dependencies = [
+    "pyyaml==5.3.1"
+]

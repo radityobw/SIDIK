@@ -1,0 +1,10 @@
+# Core SIDIK Engine & Semantic Versioning
+packaging>=23.0.0
+
+# Scientific Visualization & Reporting
+matplotlib>=3.8.0
+pillow>=10.0.0
+python-docx>=1.1.0
+
+# Comparative Benchmarking Baseline
+pip-audit>=2.7.0

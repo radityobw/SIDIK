@@ -1,0 +1,6 @@
+[project]
+name = "app-dep_test_neg_018"
+version = "0.1.0"
+dependencies = [
+    "cryptography==42.0.7"
+]

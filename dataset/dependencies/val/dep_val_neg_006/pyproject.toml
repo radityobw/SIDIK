@@ -1,0 +1,6 @@
+[project]
+name = "app-dep_val_neg_006"
+version = "0.1.0"
+dependencies = [
+    "werkzeug==3.0.3"
+]

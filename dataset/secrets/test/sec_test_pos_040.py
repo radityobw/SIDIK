@@ -1,0 +1,1 @@
+auth_secret_key = 'bR1xHgQMv8EbcE4DHfSS5CUo9ctW0nza'

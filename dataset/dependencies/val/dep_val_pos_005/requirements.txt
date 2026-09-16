@@ -1,0 +1,2 @@
+# Generated requirements
+jinja2==3.1.2

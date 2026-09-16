@@ -1,0 +1,6 @@
+[project]
+name = "app-dep_test_neg_022"
+version = "0.1.0"
+dependencies = [
+    "urllib3==2.2.1"
+]

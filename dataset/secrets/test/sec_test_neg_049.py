@@ -1,0 +1,1 @@
+public_url = 'https://api.github.com/v1/events'

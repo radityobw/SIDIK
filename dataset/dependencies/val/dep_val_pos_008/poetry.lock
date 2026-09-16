@@ -1,0 +1,7 @@
+[[package]]
+name = "cryptography"
+version = "41.0.0"
+description = "Package cryptography"
+category = "main"
+optional = false
+python-versions = "*"

@@ -1,0 +1,6 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+aiohttp = "3.9.5"

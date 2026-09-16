@@ -1,0 +1,7 @@
+[[package]]
+name = "urllib3"
+version = "1.26.10"
+description = "Package urllib3"
+category = "main"
+optional = false
+python-versions = "*"

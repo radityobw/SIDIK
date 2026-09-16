@@ -1,0 +1,7 @@
+[[package]]
+name = "werkzeug"
+version = "2.2.0"
+description = "Package werkzeug"
+category = "main"
+optional = false
+python-versions = "*"

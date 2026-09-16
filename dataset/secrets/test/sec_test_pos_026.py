@@ -1,0 +1,1 @@
+DATABASE_URI = 'postgres://dbadmin:Dsf7ID4HpbEyxHgn@postgres.prod.corp.net:5432/main_db'

@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GroundTruthDatasetSchema",
+  "description": "Validation schema for static security analysis ground truth annotations",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["sample_id", "ground_truth", "split", "file_path"],
+    "properties": {
+      "sample_id": { "type": "string" },
+      "ground_truth": { "type": "boolean" },
+      "split": { "type": "string", "enum": ["dev", "val", "test"] },
+      "file_path": { "type": "string" },
+      "category": { "type": "string" },
+      "expected_rule": { "type": ["string", "null"] },
+      "package": { "type": "string" },
+      "declared_spec": { "type": "string" },
+      "cve": { "type": ["string", "null"] },
+      "manifest_type": { "type": "string" }
+    }
+  }
+}

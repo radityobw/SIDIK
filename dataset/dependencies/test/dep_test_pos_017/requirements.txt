@@ -1,0 +1,2 @@
+# Generated requirements
+aiohttp==3.9.1

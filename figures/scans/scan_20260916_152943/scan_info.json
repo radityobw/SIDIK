@@ -1,0 +1,25 @@
+{
+  "scan_id": "scan_20260916_152943",
+  "timestamp": "2026-09-16 15:29:43",
+  "target_path": "D:\\Downloads\\SIDIK",
+  "total_files": 2902,
+  "total_findings": 127,
+  "secrets_count": 81,
+  "dependencies_count": 46,
+  "critical_count": 62,
+  "high_count": 47,
+  "medium_count": 18,
+  "low_count": 0,
+  "duration_seconds": 55.1365,
+  "peak_memory_mb": 3.37,
+  "metrics": {
+    "precision_proposed": 0.8583,
+    "recall_proposed": 1.0,
+    "f1_proposed": 0.9237,
+    "mcc_proposed": 0.9264,
+    "precision_baseline": 0.68,
+    "recall_baseline": 0.9,
+    "f1_baseline": 0.77,
+    "mcc_baseline": 0.78
+  }
+}
