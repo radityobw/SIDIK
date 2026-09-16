@@ -80,7 +80,26 @@ def main():
         enable_entropy=not args.no_entropy
     )
 
-    report = scanner.scan_path(args.target)
+    def cli_progress(current: int, total: int, filename: str):
+        if args.format != "console":
+            return
+        if not sys.stdout.isatty():
+            return
+        bar_len = 24
+        frac = (current / total) if total > 0 else 0.0
+        filled = int(bar_len * frac)
+        bar = "█" * filled + "░" * (bar_len - filled)
+        pct = frac * 100
+        fname = filename if len(filename) <= 35 else "..." + filename[-32:]
+        label = "Memindai" if args.lang == "id" else "Scanning"
+        sys.stdout.write(f"\r\033[K[*] {label} [{bar}] {pct:5.1f}% ({current}/{total}) {fname}")
+        sys.stdout.flush()
+
+    report = scanner.scan_path(args.target, progress_callback=cli_progress)
+
+    if args.format == "console" and sys.stdout.isatty():
+        sys.stdout.write("\r\033[K")
+        sys.stdout.flush()
 
     # Format output
     if args.format == "json":

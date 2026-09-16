@@ -65,6 +65,19 @@ urllib3==1.26.5
         self.assertIn("Finding_ID,Type,Category,Severity", csv_output)
         self.assertIn("Remediation", csv_output)
 
+    def test_scan_with_progress_callback(self):
+        progress_events = []
+
+        def on_progress(cur, total, fname):
+            progress_events.append((cur, total, fname))
+
+        scanner = SidikScanner(enable_secret_scan=True, enable_dependency_scan=True)
+        report = scanner.scan_path(self.test_dir.name, progress_callback=on_progress)
+
+        self.assertGreater(len(progress_events), 0)
+        self.assertEqual(progress_events[-1][0], progress_events[-1][1])  # final event: cur == total
+        self.assertEqual(report.summary.total_files_scanned, len(progress_events))
+
 
 if __name__ == "__main__":
     unittest.main()

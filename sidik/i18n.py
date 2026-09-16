@@ -298,9 +298,21 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "id": "Siap memindai.",
         "en": "Ready to scan."
     },
+    "progress_collecting": {
+        "id": "Menyiapkan dan mengindeks berkas...",
+        "en": "Preparing and indexing codebase files..."
+    },
+    "progress_scanning": {
+        "id": "Memindai [{current}/{total}]: {file}",
+        "en": "Scanning [{current}/{total}]: {file}"
+    },
+    "progress_complete": {
+        "id": "✓ Pemindaian 100% selesai ({total} berkas)",
+        "en": "✓ Scan 100% complete ({total} files)"
+    },
     "status_scanning": {
-        "id": "Sedang memindai target: {target} ...",
-        "en": "Scanning target: {target} ..."
+        "id": "Sedang memindai: {target}",
+        "en": "Scanning: {target}"
     },
     "status_completed": {
         "id": "Pemindaian selesai dalam {duration}s. Total temuan: {count}.",

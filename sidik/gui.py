@@ -332,6 +332,72 @@ class RoundedMetricCard(tk.Canvas):
             self.on_click(self.filter_key)
 
 
+class GlassProgressBar(tk.Canvas):
+    """Modern, high-performance dark glassmorphic progress bar for codebase scanning."""
+
+    def __init__(self, parent, height: int = 10, bg_parent: str = COLORS["card"],
+                 fill_color: str = COLORS["primary"], glow_color: str = COLORS["primary_bright"],
+                 track_color: str = "#080b0f", border_color: str = COLORS["card_border"]):
+        super().__init__(parent, height=height, bg=bg_parent, highlightthickness=0, bd=0)
+        self.h = height
+        self.fill_color = fill_color
+        self.glow_color = glow_color
+        self.track_color = track_color
+        self.border_color = border_color
+        self.fraction = 0.0
+        self.w = 100
+        self.bind("<Configure>", self._on_configure)
+
+    def _on_configure(self, event):
+        if event.width > 10:
+            self.w = event.width
+            self._draw()
+
+    def set_fraction(self, frac: float):
+        self.fraction = max(0.0, min(1.0, float(frac)))
+        self._draw()
+
+    def reset(self):
+        self.fraction = 0.0
+        self._draw()
+
+    def _draw_pill(self, x1, y1, x2, y2, fill, outline="", width=1):
+        if x2 <= x1:
+            return
+        h = y2 - y1
+        r = h / 2.0
+        d = 2 * r
+        w = x2 - x1
+        if w < d:
+            self.create_oval(x1, y1, x1 + w, y2, fill=fill, outline=outline, width=width)
+        else:
+            self.create_arc(x1, y1, x1 + d, y2, start=90, extent=180, fill=fill, outline=outline, width=width)
+            self.create_arc(x2 - d, y1, x2, y2, start=270, extent=180, fill=fill, outline=outline, width=width)
+            self.create_rectangle(x1 + r, y1, x2 - r, y2, fill=fill, outline=outline, width=width)
+            if outline:
+                self.create_line(x1 + r, y1, x2 - r, y1, fill=outline, width=width)
+                self.create_line(x1 + r, y2, x2 - r, y2, fill=outline, width=width)
+
+    def _draw(self):
+        self.delete("all")
+        w, h = self.w, self.h
+        if w < 10:
+            return
+
+        pad_x = 1
+        pad_y = 1
+        self._draw_pill(pad_x, pad_y, w - pad_x, h - pad_y, fill=self.track_color, outline=self.border_color, width=1)
+
+        if self.fraction > 0.001:
+            fw = int((w - 2 * pad_x) * self.fraction)
+            if fw > 2:
+                self._draw_pill(pad_x + 1, pad_y + 1, pad_x + fw - 1, h - pad_y - 1,
+                                fill=self.fill_color, outline="")
+                if fw > 8:
+                    self.create_line(pad_x + 4, pad_y + 2, pad_x + fw - 4, pad_y + 2,
+                                     fill=self.glow_color, width=1)
+
+
 class SegmentedTabBar(tk.Frame):
     """Modern segmented glass pill navigation bar."""
 
@@ -955,6 +1021,29 @@ class SecurityAnalyzerGUI:
             font=("Segoe UI", 8, "bold"))
         self.btn_save_chart.configure(state="disabled")
         self.btn_save_chart.pack(side="right", padx=3)
+
+        # ── Scanning Progress Loading Bar ──────────────────────────────
+        self.progress_frame = tk.Frame(ctrl_card, bg=COLORS["card"])
+        # Initially unmapped; packed in _start_scan
+
+        progress_info = tk.Frame(self.progress_frame, bg=COLORS["card"])
+        progress_info.pack(fill="x", pady=(0, 3))
+
+        self.lbl_progress_file = tk.Label(
+            progress_info, text="", bg=COLORS["card"], fg=COLORS["fg2"],
+            font=("Segoe UI", 8), anchor="w")
+        self.lbl_progress_file.pack(side="left", fill="x", expand=True)
+
+        self.lbl_progress_pct = tk.Label(
+            progress_info, text="0%", bg=COLORS["card"], fg=COLORS["primary_bright"],
+            font=("Segoe UI", 8, "bold"), anchor="e")
+        self.lbl_progress_pct.pack(side="right")
+
+        self.progress_bar = GlassProgressBar(
+            self.progress_frame, height=10, bg_parent=COLORS["card"],
+            fill_color=COLORS["primary"], glow_color=COLORS["primary_bright"],
+            track_color="#080b0f", border_color=COLORS["card_border"])
+        self.progress_bar.pack(fill="x", pady=(0, 2))
 
         # ── Metric Tiles (grid = true flex equal-width) ─────────────────
         tiles_frame = tk.Frame(self.tab_scan, bg=COLORS["bg"])
@@ -1820,10 +1909,20 @@ class SecurityAnalyzerGUI:
         self.btn_save_chart.configure(state="disabled")
         self.status_bar.configure(text=t("status_scanning", target=target), fg=self.colors["warning"])
 
+        # Show & initialize progress loading bar
+        if hasattr(self, "progress_bar"):
+            self.progress_bar.reset()
+            self.lbl_progress_file.configure(text=t("progress_collecting"), fg=COLORS["fg2"])
+            self.lbl_progress_pct.configure(text="0%")
+            self.progress_frame.pack(fill="x", pady=(8, 0))
+
         t_thread = threading.Thread(target=self._run_scan_thread, args=(target,), daemon=True)
         t_thread.start()
 
     def _run_scan_thread(self, target: str):
+        def on_progress(current: int, total: int, filename: str):
+            self.root.after(0, self._update_scan_progress, current, total, filename)
+
         try:
             scanner = SecurityScanner(
                 enable_secret_scan=self.var_secret.get(),
@@ -1831,10 +1930,31 @@ class SecurityAnalyzerGUI:
                 enable_context=self.var_context.get(),
                 enable_entropy=self.var_entropy.get()
             )
-            report = scanner.scan_path(target)
+            report = scanner.scan_path(target, progress_callback=on_progress)
             self.root.after(0, self._scan_completed, report)
         except Exception as e:
             self.root.after(0, self._scan_failed, str(e))
+
+    def _update_scan_progress(self, current: int, total: int, filename: str):
+        if not self.is_scanning or not hasattr(self, "progress_bar"):
+            return
+        frac = (current / total) if total > 0 else 0.0
+        pct = int(frac * 100)
+        self.progress_bar.set_fraction(frac)
+        self.lbl_progress_pct.configure(text=f"{pct}% ({current}/{total})")
+        display_name = filename if len(filename) <= 60 else "..." + filename[-57:]
+        self.lbl_progress_file.configure(
+            text=t("progress_scanning", current=current, total=total, file=display_name),
+            fg=COLORS["fg"]
+        )
+        self.status_bar.configure(
+            text=t("status_scanning", target=display_name),
+            fg=self.colors["warning"]
+        )
+
+    def _hide_progress_bar(self):
+        if not self.is_scanning and hasattr(self, "progress_frame"):
+            self.progress_frame.pack_forget()
 
     def _scan_completed(self, report: ScanReport):
         self.is_scanning = False
@@ -1843,6 +1963,16 @@ class SecurityAnalyzerGUI:
         self.btn_scan.configure(state="normal", text=t("btn_scan"))
         self.btn_export.configure(state="normal")
         self.btn_save_chart.configure(state="normal")
+
+        # Update progress bar to completed state and schedule auto-hide
+        if hasattr(self, "progress_bar"):
+            self.progress_bar.set_fraction(1.0)
+            self.lbl_progress_pct.configure(text="100%")
+            self.lbl_progress_file.configure(
+                text=t("progress_complete", total=report.summary.total_files_scanned),
+                fg=COLORS["success"]
+            )
+            self.root.after(2500, self._hide_progress_bar)
 
         s = report.summary
         crit_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "CRITICAL")
@@ -1886,6 +2016,7 @@ class SecurityAnalyzerGUI:
         self.is_scanning = False
         self.btn_scan.configure(state="normal", text=t("btn_scan"))
         self.btn_save_chart.configure(state="disabled")
+        self._hide_progress_bar()
         self.status_bar.configure(text=t("status_failed", error=err_msg), fg=self.colors["danger"])
         messagebox.showerror(t("dialog_scan_error_title"), f"{err_msg}")
 
