@@ -112,9 +112,8 @@ SIDIK/
 ├── results/                  # Data mentah hasil evaluasi benchmark (JSON)
 ├── tests/                    # Pengujian unit & integrasi (23 test cases)
 ├── sidik.py                  # Universal Root Launcher (CLI & GUI)
-├── sidik_gui.py              # Desktop GUI launcher langsung
-├── run_sidik.bat             # Launcher Windows satu-klik untuk GUI
-├── run_sidik.sh              # Launcher Linux & macOS untuk GUI/CLI
+├── run_sidik.bat             # Launcher Windows satu-klik untuk GUI / CLI
+├── run_sidik.sh              # Launcher Linux & macOS untuk GUI / CLI
 ├── requirements.txt          # Dependensi Python pihak ketiga
 └── README.md                 # Dokumentasi proyek dwi-bahasa
 ```
@@ -138,9 +137,9 @@ pip install -r requirements.txt
 ### 2. Menjalankan Desktop GUI
 Anda dapat menjalankan antarmuka desktop SIDIK dengan perintah:
 ```bash
-python sidik.py --gui
+python sidik.py
 # atau
-python sidik_gui.py
+python sidik.py --gui
 ```
 - **Windows:** Cukup klik dua kali berkas [`run_sidik.bat`](file:///d:/Downloads/SIDIK/run_sidik.bat).
 - **Linux / macOS:** Jalankan skrip shell:
@@ -298,9 +297,8 @@ SIDIK/
 ├── results/                  # Raw benchmark evaluation results (JSON)
 ├── tests/                    # Comprehensive unit & integration tests (23 test cases)
 ├── sidik.py                  # Universal Root Launcher (CLI & GUI)
-├── sidik_gui.py              # Direct Desktop GUI launcher
-├── run_sidik.bat             # One-click Windows GUI launcher
-├── run_sidik.sh              # Linux & macOS launcher script
+├── run_sidik.bat             # One-click Windows GUI / CLI launcher
+├── run_sidik.sh              # Linux & macOS launcher script (GUI / CLI)
 ├── requirements.txt          # Python dependencies
 └── README.md                 # Bilingual project documentation
 ```
@@ -324,9 +322,9 @@ pip install -r requirements.txt
 ### 2. Launching the Desktop GUI
 Launch the desktop interface using Python:
 ```bash
-python sidik.py --gui
+python sidik.py
 # or
-python sidik_gui.py
+python sidik.py --gui
 ```
 - **Windows:** Double-click [`run_sidik.bat`](file:///d:/Downloads/SIDIK/run_sidik.bat).
 - **Linux / macOS:** Execute the shell launcher:

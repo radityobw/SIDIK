@@ -20,9 +20,5 @@ else
     exit 1
 fi
 
-# Run GUI if no arguments, or pass arguments to sidik.py
-if [ $# -eq 0 ]; then
-    exec "$PY_CMD" sidik_gui.py
-else
-    exec "$PY_CMD" sidik.py "$@"
-fi
+# Run universal launcher (launches GUI if no args, or passes args to CLI)
+exec "$PY_CMD" sidik.py "$@"
