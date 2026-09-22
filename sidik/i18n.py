@@ -33,8 +33,8 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "en": "SIDIK"
     },
     "app_subtitle": {
-        "id": "— Secret Identification and Dependency Inspection Kit (Python)",
-        "en": "— Secret Identification and Dependency Inspection Kit (Python)"
+        "id": "- Secret Identification and Dependency Inspection Kit (Python)",
+        "en": "- Secret Identification and Dependency Inspection Kit (Python)"
     },
     "app_version": {
         "id": "v1.0 (Research Edition)",

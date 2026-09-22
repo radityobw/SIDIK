@@ -36,6 +36,8 @@ env/
 .idea/
 *.swp
 *.swo
+.agents/
+pyrightconfig.json
 
 # Research drafts, internal guides & literature (Code-only repo)
 SIDIK-paper/

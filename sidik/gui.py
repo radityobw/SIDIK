@@ -15,7 +15,7 @@ Engineered with Python standard library (tkinter/ttk) and PIL:
 import os
 import sys
 import threading
-from typing import Optional, List, Dict, Any, Callable
+from typing import Optional, List, Dict, Any, Callable, cast
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
@@ -34,6 +34,9 @@ try:
     HAS_PIL = True
 except ImportError:
     HAS_PIL = False
+    Image: Any = None
+    ImageDraw: Any = None
+    ImageTk: Any = None
 
 try:
     import ctypes
@@ -227,7 +230,14 @@ class RoundedPillButton(tk.Canvas):
         self.text = new_text
         self._draw_state()
 
-    def configure(self, **kwargs):
+    def configure(self, cnf: Any = None, **kwargs: Any) -> Any:
+        if cnf:
+            if isinstance(cnf, dict):
+                kwargs.update(cnf)
+            elif isinstance(cnf, str):
+                if cnf == "text":
+                    return self.text
+                return super().configure(cnf)
         if "text" in kwargs:
             self.text = kwargs.pop("text")
         if "state" in kwargs:
@@ -236,7 +246,8 @@ class RoundedPillButton(tk.Canvas):
             self.config(cursor="" if self.is_disabled else "hand2")
         self._draw_state()
         if kwargs:
-            super().configure(**kwargs)
+            return super().configure(**kwargs)
+        return None
 
 
 class RoundedMetricCard(tk.Canvas):
@@ -309,10 +320,20 @@ class RoundedMetricCard(tk.Canvas):
         self.title = title
         self._draw()
 
-    def configure(self, **kwargs):
+    def configure(self, cnf: Any = None, **kwargs: Any) -> Any:
+        if cnf:
+            if isinstance(cnf, dict):
+                kwargs.update(cnf)
+            elif isinstance(cnf, str):
+                if cnf == "text":
+                    return self.value
+                return super().configure(cnf)
         if "text" in kwargs:
             self.value = kwargs.pop("text")
             self._draw()
+        if kwargs:
+            return super().configure(**kwargs)
+        return None
 
     def cget(self, key: str):
         if key == "text":
@@ -510,7 +531,7 @@ class RoundedDropdown(tk.Frame):
             self._btn_canvas.create_rectangle(
                 0, 0, self._width, self._height,
                 fill=COLORS["entry"], outline=COLORS["card_border"])
-        # Measure text with real font metrics — no char-count guessing
+        # Measure text with real font metrics - no char-count guessing
         max_px = self._width - 36  # 12 left pad + ~14 arrow area + 10 right margin
         try:
             import tkinter.font as tkFont
@@ -687,7 +708,7 @@ class SecurityAnalyzerGUI:
 
     def __init__(self, root: tk.Tk):
         self.root = root
-        self.root.title("SIDIK — Secret Identification & Dependency Inspection Kit")
+        self.root.title("SIDIK - Secret Identification & Dependency Inspection Kit")
         self.root.geometry("1200x820")
         self.root.minsize(1000, 680)
         self.root.configure(bg=COLORS["bg"])
@@ -802,7 +823,7 @@ class SecurityAnalyzerGUI:
                     pil_img = Image.open(icon_png)
                     icon_img = ImageTk.PhotoImage(pil_img.resize((64, 64), Image.Resampling.LANCZOS))
                     self._image_refs["app_icon"] = icon_img
-                    self.root.iconphoto(True, icon_img)
+                    self.root.iconphoto(True, cast(Any, icon_img))
                 else:
                     tk_img = tk.PhotoImage(file=icon_png)
                     self._image_refs["app_icon"] = tk_img
@@ -1048,7 +1069,7 @@ class SecurityAnalyzerGUI:
         # ── Metric Tiles (grid = true flex equal-width) ─────────────────
         tiles_frame = tk.Frame(self.tab_scan, bg=COLORS["bg"])
         tiles_frame.pack(fill="x", pady=(8, 0))
-        # 7 equal columns — weight=1 makes each column stretch proportionally
+        # 7 equal columns - weight=1 makes each column stretch proportionally
         for col in range(7):
             tiles_frame.columnconfigure(col, weight=1, uniform="tile")
 
@@ -1167,7 +1188,7 @@ class SecurityAnalyzerGUI:
         ]
         for col, heading, w, anchor in col_cfg:
             self.tree.heading(col, text=heading)
-            self.tree.column(col, width=w, anchor=anchor)
+            self.tree.column(col, width=w, anchor=cast(Any, anchor))
 
         sb_y = ttk.Scrollbar(tree_container, orient="vertical",   command=self.tree.yview)
         sb_x = ttk.Scrollbar(tree_container, orient="horizontal", command=self.tree.xview)
@@ -1557,7 +1578,7 @@ class SecurityAnalyzerGUI:
                     }
         return bundles
 
-    def _refresh_research_bundles(self, select_id: str = None):
+    def _refresh_research_bundles(self, select_id: Optional[str] = None):
         """Refreshes available bundles and selects the given ID or newest."""
         self.current_bundles = self._discover_research_bundles()
         titles = [b["title"] for b in self.current_bundles.values()]
@@ -2078,7 +2099,7 @@ class SecurityAnalyzerGUI:
 
             # ── 1. FIG 1 (RQ1 & RQ3: Secret Detection Performance) ─────
             fig1, ax = plt.subplots(figsize=(8.5, 5), facecolor=bg)
-            _style_ax(ax, "Fig 1 (RQ1 & RQ3) — Secret Detection: Proposed vs. Baseline")
+            _style_ax(ax, "Fig 1 (RQ1 & RQ3) - Secret Detection: Proposed vs. Baseline")
             metrics = ["Precision", "Recall", "F1-Score", "MCC"]
             x = range(len(metrics)); w = 0.32
             b1 = ax.bar([i-w/2 for i in x], [prec_prop, rec_prop, f1_prop, mcc_prop], width=w,
@@ -2095,7 +2116,7 @@ class SecurityAnalyzerGUI:
 
             # ── 2. FIG 2 (RQ2: Dependency Analysis Coverage) ───────────
             fig2, ax = plt.subplots(figsize=(8.5, 5), facecolor=bg)
-            _style_ax(ax, "Fig 2 (RQ2) — Dependency Analysis Coverage & SCA")
+            _style_ax(ax, "Fig 2 (RQ2) - Dependency Analysis Coverage & SCA")
             dp = 1.0 if dep_n > 0 else 0.0
             dr = 1.0 if dep_n > 0 else 0.0
             df1 = round(2*dp*dr/(dp+dr+1e-9), 2)
@@ -2111,7 +2132,7 @@ class SecurityAnalyzerGUI:
 
             # ── 3. FIG 3 (RQ3: Finding Severity Distribution) ──────────
             fig3, ax = plt.subplots(figsize=(8.5, 5), facecolor=bg)
-            _style_ax(ax, f"Fig 3 — Finding Severity Distribution & Findings (n={total})")
+            _style_ax(ax, f"Fig 3 - Finding Severity Distribution & Findings (n={total})")
             sev_cols = ["#ef4444", "#f97316", "#3b82f6", "#22c55e"]
             s_bars = ax.bar(["CRITICAL", "HIGH", "MEDIUM", "LOW"],
                             [crit_n, high_n, med_n, low_n],
@@ -2127,7 +2148,7 @@ class SecurityAnalyzerGUI:
 
             # ── 4. FIG 4 (RQ4: Performance Overhead) ───────────────────
             fig4, ax = plt.subplots(figsize=(8.5, 5), facecolor=bg)
-            _style_ax(ax, "Fig 4 (RQ4) — Resource & Computational Overhead")
+            _style_ax(ax, "Fig 4 (RQ4) - Resource & Computational Overhead")
             dur_ms = (s.scan_duration_seconds or 0) * 1000
             perf_v = [round(dur_ms*0.6, 1), round(dur_ms*0.4, 1),
                       round(dur_ms, 1), round(s.peak_memory_mb or 0, 2)]
@@ -2149,7 +2170,7 @@ class SecurityAnalyzerGUI:
             # ── 5. MASTER BUNDLE (4-in-1 Combined Overview) ───────────
             fig_all = plt.figure(figsize=(14, 9), facecolor=bg)
             fig_all.suptitle(
-                f"SIDIK — Master Evaluation Bundle  ({datetime.now().strftime('%Y-%m-%d %H:%M')})",
+                f"SIDIK - Master Evaluation Bundle  ({datetime.now().strftime('%Y-%m-%d %H:%M')})",
                 color=fg, fontsize=13, fontweight="bold", y=0.98)
             gs = gridspec.GridSpec(2, 2, figure=fig_all,
                                    hspace=0.42, wspace=0.32,
