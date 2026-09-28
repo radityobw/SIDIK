@@ -1,33 +1,5 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="logo/SIDIK-nobg-dark.png">
-  <source media="(prefers-color-scheme: light)" srcset="logo/SIDIK-nobg.png">
-  <img alt="SIDIK Logo" src="logo/SIDIK-nobg-dark.png" width="260"/>
-</picture>
-
-# SIDIK
-### Secret Identification and Dependency Inspection Kit
-
-**Lightweight Static Application Security Testing (SAST) & Software Composition Analysis (SCA) for Python**
-
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-23%20Passed-brightgreen.svg)]()
-[![Precision](https://img.shields.io/badge/Precision-1.0000-success.svg)]()
-[![F1-Score](https://img.shields.io/badge/F1--Score-0.9474-blue.svg)]()
-[![Speed](https://img.shields.io/badge/Latency-49.5%20ms-yellow.svg)]()
-[![Languages](https://img.shields.io/badge/Languages-ID%20%7C%20EN-purple.svg)]()
-
----
-
-### 🌐 Language / Bahasa
-**[🇮🇩 Baca dalam Bahasa Indonesia](#-bahasa-indonesia)** &nbsp;&nbsp;•&nbsp;&nbsp; **[🇬🇧 Read in English](#-english)**
-
----
-
-</div>
-
 <br/>
 
 ---
@@ -36,7 +8,7 @@
 
 ## 📌 Ikhtisar Proyek
 
-**SIDIK** (*Secret Identification and Dependency Inspection Kit*) adalah instrumen analisis keamanan statis (*Static Application Security Testing* / SAST) dan analisis komposisi perangkat lunak (*Software Composition Analysis* / SCA) terpadu berbasis Python. 
+**SIDIK** (*Secret Identification and Dependency Inspection Kit*) adalah instrumen analisis keamanan statis (*Static Application Security Testing* / SAST) dan analisis komposisi perangkat lunak (*Software Composition Analysis* / SCA) terpadu berbasis Python.
 
 Dengan menggabungkan analisis konteks leksikal, entropi Shannon, dan basis data kerentanan advisori luring untuk 5 format manifest, **SIDIK** dirancang untuk mendeteksi *hardcoded secrets* dan dependensi rentan secara akurat dengan tingkat alarm palsu (*False Positive Rate* / FPR) yang ditekan hingga **0%** serta *overhead* waktu eksekusi agregat kurang dari **50 milidetik**.
 
@@ -123,24 +95,30 @@ SIDIK/
 ## 🚀 Panduan Penggunaan Cepat (Cross-Platform)
 
 ### 1. Instalasi Dependensi
+
 Pastikan Python 3.10+ telah terpasang di sistem Anda, kemudian pasang dependensi:
+
 ```bash
 # Windows / macOS / Linux
 pip install -r requirements.txt
 ```
 
 > **Catatan Pengguna Linux**: Pada beberapa distribusi Linux (seperti Ubuntu atau Debian), modul Tkinter tidak disertakan secara default dalam paket Python standar. Pasang modul Tkinter dengan:
+>
 > ```bash
 > sudo apt install python3-tk
 > ```
 
 ### 2. Menjalankan Desktop GUI
+
 Anda dapat menjalankan antarmuka desktop SIDIK dengan perintah:
+
 ```bash
 python sidik.py
 # atau
 python sidik.py --gui
 ```
+
 - **Windows:** Cukup klik dua kali berkas [`run_sidik.bat`](file:///d:/Downloads/SIDIK/run_sidik.bat).
 - **Linux / macOS:** Jalankan skrip shell:
   ```bash
@@ -149,10 +127,13 @@ python sidik.py --gui
   ```
 
 #### 🌐 Cara Mengubah Bahasa di GUI:
+
 Pada antarmuka GUI, klik tombol **`🌐 English (EN)`** di pojok kanan atas header. Seluruh teks dashboard, nama tab, label metrik, kolom tabel temuan, status bar, dan kotak dialog akan langsung berganti ke Bahasa Inggris tanpa perlu memulai ulang aplikasi. Klik kembali tombol **`🌐 Indonesia (ID)`** untuk kembali ke Bahasa Indonesia.
 
 ### 3. Menjalankan CLI Scanner
+
 SIDIK dapat dijalankan secara langsung melalui command line interface:
+
 ```bash
 # Pemindaian dengan ringkasan konsol berwarna ANSI (Bahasa Indonesia)
 python -m sidik --target dataset/secrets/test --lang id
@@ -177,12 +158,15 @@ python -m sidik --target dataset/secrets/test --format markdown --lang en --outp
 ```
 
 ### 4. Menjalankan Pengujian Unit & Integrasi
+
 Seluruh unit test (23 pengujian otomatis) mencakup mesin deteksi, parser dependensi, integritas internasionalisasi (i18n), rekomendasi remediasi, dan aset grafis:
+
 ```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 ### 5. Menjalankan Evaluasi Benchmark & Pembuatan Grafik
+
 ```bash
 # Evaluasi komparatif terhadap baseline
 python experiments/run_experiments.py
@@ -200,21 +184,22 @@ python experiments/generate_charts.py
 
 Berdasarkan pengujian pada dataset uji (*test set*) independen:
 
-| Kategori Pengujian | Metrik | SIDIK | Baseline Konvensional | Keunggulan SIDIK |
-|---|---|---|---|---|
-| **Secret Detection** | **Precision** | **1.0000 (100%)** | 0.8182 (81.8%) | Bebas alarm palsu |
-| | **Recall** | **0.9000 (90.0%)** | 0.9000 (90.0%) | Cakupan sepadan |
-| | **F1-Score** | **0.9474** | 0.8571 | Peningkatan signifikan |
-| | **FPR (False Positive Rate)** | **0.00%** | **20.00%** | **Eliminasi 100% false positive** |
-| **Dependency SCA** | **Precision** | **1.0000 (100%)** | 1.0000 (100%) | Akurasi tinggi |
-| | **Recall** | **1.0000 (100%)** | 1.0000 (100%) | Deteksi menyeluruh |
-| | **F1-Score** | **1.0000** | 1.0000 | 5 format manifest |
-| **Efisiensi Komputasi** | **Total Waktu Eksekusi** | **49.5 ms** | 112.4 ms | **2.27x lebih cepat** |
-| | **Konsumsi Memori Puncak** | **0.25 MB** | 14.8 MB | **59x lebih hemat memori** |
+| Kategori Pengujian            | Metrik                              | SIDIK                    | Baseline Konvensional | Keunggulan SIDIK                        |
+| ----------------------------- | ----------------------------------- | ------------------------ | --------------------- | --------------------------------------- |
+| **Secret Detection**    | **Precision**                 | **1.0000 (100%)**  | 0.8182 (81.8%)        | Bebas alarm palsu                       |
+|                               | **Recall**                    | **0.9000 (90.0%)** | 0.9000 (90.0%)        | Cakupan sepadan                         |
+|                               | **F1-Score**                  | **0.9474**         | 0.8571                | Peningkatan signifikan                  |
+|                               | **FPR (False Positive Rate)** | **0.00%**          | **20.00%**      | **Eliminasi 100% false positive** |
+| **Dependency SCA**      | **Precision**                 | **1.0000 (100%)**  | 1.0000 (100%)         | Akurasi tinggi                          |
+|                               | **Recall**                    | **1.0000 (100%)**  | 1.0000 (100%)         | Deteksi menyeluruh                      |
+|                               | **F1-Score**                  | **1.0000**         | 1.0000                | 5 format manifest                       |
+| **Efisiensi Komputasi** | **Total Waktu Eksekusi**      | **49.5 ms**        | 112.4 ms              | **2.27x lebih cepat**             |
+|                               | **Konsumsi Memori Puncak**    | **0.25 MB**        | 14.8 MB               | **59x lebih hemat memori**        |
 
 <br/>
 
 ---
+
 ---
 
 # 🇬🇧 English
@@ -308,24 +293,30 @@ SIDIK/
 ## 🚀 Quick Start Guide (Cross-Platform)
 
 ### 1. Installation
+
 Ensure Python 3.10 or higher is installed on your system, then install the dependencies:
+
 ```bash
 # Windows / macOS / Linux
 pip install -r requirements.txt
 ```
 
 > **Linux Note**: On some Linux distributions (such as Ubuntu or Debian), Tkinter is packaged separately. Install it via:
+>
 > ```bash
 > sudo apt install python3-tk
 > ```
 
 ### 2. Launching the Desktop GUI
+
 Launch the desktop interface using Python:
+
 ```bash
 python sidik.py
 # or
 python sidik.py --gui
 ```
+
 - **Windows:** Double-click [`run_sidik.bat`](file:///d:/Downloads/SIDIK/run_sidik.bat).
 - **Linux / macOS:** Execute the shell launcher:
   ```bash
@@ -334,10 +325,13 @@ python sidik.py --gui
   ```
 
 #### 🌐 Switching Languages in GUI:
+
 Click the **`🌐 English (EN)`** button located at the top-right corner of the header. All tabs, metrics cards, table headers, status indicators, and remediation panes will instantly switch languages in-place. Click **`🌐 Indonesia (ID)`** to revert to Indonesian.
 
 ### 3. Running the CLI Scanner
+
 Run scans directly from your terminal:
+
 ```bash
 # Scan with English ANSI colored console output
 python -m sidik --target dataset/secrets/test --lang en
@@ -362,12 +356,15 @@ python -m sidik --target dataset/secrets/test --format markdown --lang id --outp
 ```
 
 ### 4. Running Unit Tests
+
 Execute the full test suite (23 automated test cases covering secret detection, SCA parsing, i18n integrity, remediation, and visual assets):
+
 ```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 ### 5. Running Benchmark Experiments & Generating Charts
+
 ```bash
 # Run comparative baseline benchmarks
 python experiments/run_experiments.py
@@ -385,20 +382,22 @@ python experiments/generate_charts.py
 
 Results evaluated on an independent, unseen test benchmark dataset:
 
-| Evaluation Category | Metric | SIDIK | Conventional Baseline | Advantage of SIDIK |
-|---|---|---|---|---|
-| **Secret Detection** | **Precision** | **1.0000 (100%)** | 0.8182 (81.8%) | Zero false positives |
-| | **Recall** | **0.9000 (90.0%)** | 0.9000 (90.0%) | Comparable coverage |
-| | **F1-Score** | **0.9474** | 0.8571 | Significant performance gain |
-| | **FPR (False Positive Rate)** | **0.00%** | **20.00%** | **100% elimination of false alarms** |
-| **Dependency SCA** | **Precision** | **1.0000 (100%)** | 1.0000 (100%) | Reliable vulnerability detection |
-| | **Recall** | **1.0000 (100%)** | 1.0000 (100%) | Complete manifest coverage |
-| | **F1-Score** | **1.0000** | 1.0000 | 5 manifest formats supported |
-| **Computational Overhead** | **Aggregate Latency** | **49.5 ms** | 112.4 ms | **2.27x faster execution** |
-| | **Peak Memory** | **0.25 MB** | 14.8 MB | **59x lower memory footprint** |
+| Evaluation Category              | Metric                              | SIDIK                    | Conventional Baseline | Advantage of SIDIK                         |
+| -------------------------------- | ----------------------------------- | ------------------------ | --------------------- | ------------------------------------------ |
+| **Secret Detection**       | **Precision**                 | **1.0000 (100%)**  | 0.8182 (81.8%)        | Zero false positives                       |
+|                                  | **Recall**                    | **0.9000 (90.0%)** | 0.9000 (90.0%)        | Comparable coverage                        |
+|                                  | **F1-Score**                  | **0.9474**         | 0.8571                | Significant performance gain               |
+|                                  | **FPR (False Positive Rate)** | **0.00%**          | **20.00%**      | **100% elimination of false alarms** |
+| **Dependency SCA**         | **Precision**                 | **1.0000 (100%)**  | 1.0000 (100%)         | Reliable vulnerability detection           |
+|                                  | **Recall**                    | **1.0000 (100%)**  | 1.0000 (100%)         | Complete manifest coverage                 |
+|                                  | **F1-Score**                  | **1.0000**         | 1.0000                | 5 manifest formats supported               |
+| **Computational Overhead** | **Aggregate Latency**         | **49.5 ms**        | 112.4 ms              | **2.27x faster execution**           |
+|                                  | **Peak Memory**               | **0.25 MB**        | 14.8 MB               | **59x lower memory footprint**       |
 
 ---
 
 ## 📄 License & Citation
 
 This research instrument is released under the **MIT License**. For academic citations, research replications, or collaboration inquiries, please refer to the project documentation and evaluation scripts in `experiments/`.
+
+Zayyan was here
