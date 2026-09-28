@@ -1,1 +1,1 @@
-openai_key = 'sk-proj-your_openai_api_key_here'
+openai_key = 'sk-proj-your_openai_api_key'
