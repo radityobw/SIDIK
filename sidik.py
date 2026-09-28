@@ -17,6 +17,7 @@ def run():
             sys.argv.remove("--gui")
         try:
             print("[*] Starting SIDIK Desktop GUI (Glassmorphic & Lightweight mode)...")
+            print("[*] Developed by SIDIK Team 🤩✨")
             print("[*] Tip: To run the CLI scanner directly, use: python sidik.py --target <path>\n")
             from sidik.gui import main as gui_main
             gui_main()
