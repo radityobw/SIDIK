@@ -33,6 +33,11 @@ class SecretDetector:
         lines = content.splitlines()
 
         for line_num, line in enumerate(lines, start=1):
+            # Check for inline suppression comments (e.g., # sidik:ignore, # nosec)
+            line_lower = line.lower()
+            if "sidik:ignore" in line_lower or "# nosec" in line_lower or "# noqa: sidik" in line_lower:
+                continue
+
             line_findings: List[Finding] = []
             matched_specific_rule = False
 

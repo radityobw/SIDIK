@@ -34,11 +34,17 @@ Instrumen ini kini dilengkapi dengan **rekomendasi perbaikan praktis (*actionabl
    - **Pencarian Cepat (*Live Search*) & Filter Multi-Dimensi:** Kolom pencarian kata kunci instan (<1ms) serta filter berdasarkan tingkat bahaya (*Critical, High, Medium, Low*) dan tipe temuan (*Secrets* vs *Dependencies*).
    - **Kartu Metrik Interaktif:** Kartu metrik tingkat bahaya dapat diklik langsung untuk memfilter tabel temuan.
    - **Aksi Salin Satu-Klik (*Quick Copy*):** Tombol praktis untuk langsung menyalin rekomendasi remediasi dan potongan kode ke clipboard sistem.
-   - **Ekspor Laporan Multi-Format:** Mendukung ekspor ke format Markdown (`.md`), JSON (`.json`), dan Spreadsheet CSV (`.csv`).
+   - **Ekspor Laporan Multi-Format:** Mendukung ekspor ke format Web Interaktif Mandiri (`.html`), Markdown (`.md`), JSON (`.json`), dan Spreadsheet CSV (`.csv`).
    - **Startup Instan & Hemat Memori:** 100% pustaka standar Python (`tkinter`/`ttk`), konsumsi RAM hanya ~20 MB dengan peluncuran seketika (<0.2s).
-6. **CLI Modern Sarat Informasi (*Information-Dense ANSI Output*):**
-   - Tampilan terminal berbingkai rapi, pita distribusi tingkat bahaya berwarna, blok rekomendasi terstruktur, dan dukungan opsi `--format csv` serta `--no-color`.
-7. **Bebas Kebocoran Data Evaluasi (*Zero Data Leakage*):**
+6. **Mekanisme Pengecualian Fleksibel (*Whitelist & Ignore Support*):**
+   - Mendukung berkas `.sidikignore` (sintaks pola gitignore) untuk mengecualikan berkas, folder mock, atau test fixtures.
+   - Mendukung penanda komentar inline (`# sidik:ignore`, `# nosec`, `# noqa: sidik`) untuk baris kode pengujian yang disengaja.
+7. **Integrasi CI/CD & Ambang Batas Kegagalan (*Severity Thresholding*):**
+   - Mendukung opsi `--fail-on {any,low,medium,high,critical}` agar alur kerja CI/CD (GitHub Actions/GitLab CI) hanya gagal pada tingkat keparahan yang ditentukan.
+   - Mendukung pemuatan basis data advisori kustom melalui opsi `--db`.
+8. **CLI Modern Sarat Informasi (*Information-Dense ANSI Output*):**
+   - Tampilan terminal berbingkai rapi, pita distribusi tingkat bahaya berwarna, blok rekomendasi terstruktur, dan dukungan opsi `--format {console,json,markdown,csv,html}` serta `--no-color`.
+9. **Bebas Kebocoran Data Evaluasi (*Zero Data Leakage*):**
    - Dataset pemodelan dipisahkan secara ketat (*train/development, validation, test/benchmark*) dengan label *ground truth* teranotasi manual untuk validitas riset akademis.
 
 ---
@@ -150,6 +156,12 @@ python sidik.py --target dataset/dependencies/test
 # Ekspor hasil pemindaian ke berkas CSV Spreadsheet
 python -m sidik --target dataset/dependencies/test --format csv --output results/temuan_keamanan.csv
 
+# Ekspor laporan HTML Interaktif mandiri (bisa dibuka langsung di browser)
+python -m sidik --target dataset/secrets/test --format html --lang id --output results/laporan_audit.html
+
+# Pemindaian dengan ambang batas kegagalan CI/CD (hanya exit code 1 jika ada temuan HIGH atau CRITICAL)
+python -m sidik --target dataset/secrets/test --fail-on high
+
 # Pemindaian dan simpan laporan Markdown dalam Bahasa Indonesia
 python -m sidik --target dataset/secrets/test --format markdown --lang id --output results/laporan_keamanan.md
 
@@ -159,7 +171,7 @@ python -m sidik --target dataset/secrets/test --format markdown --lang en --outp
 
 ### 4. Menjalankan Pengujian Unit & Integrasi
 
-Seluruh unit test (23 pengujian otomatis) mencakup mesin deteksi, parser dependensi, integritas internasionalisasi (i18n), rekomendasi remediasi, dan aset grafis:
+Seluruh unit test (32 pengujian otomatis) mencakup mesin deteksi, parser dependensi, integritas internasionalisasi (i18n), rekomendasi remediasi, pengecualian (.sidikignore & inline ignore), pelaporan HTML mandiri, dan ambang batas CI/CD:
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py" -v

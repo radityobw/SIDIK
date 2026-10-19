@@ -32,9 +32,9 @@ def main():
     )
     parser.add_argument(
         "--format", "-f",
-        choices=["console", "json", "markdown", "csv"],
+        choices=["console", "json", "markdown", "csv", "html"],
         default="console",
-        help="Output report format: console, json, markdown, or csv (default: console)"
+        help="Output report format: console, json, markdown, csv, or html (default: console)"
     )
     parser.add_argument(
         "--no-color",
@@ -65,7 +65,18 @@ def main():
         "--lang",
         choices=["id", "en"],
         default="id",
-        help="Output language for console and markdown reports (default: id)"
+        help="Output language for console, markdown, and html reports (default: id)"
+    )
+    parser.add_argument(
+        "--fail-on",
+        choices=["any", "low", "medium", "high", "critical"],
+        default="any",
+        help="Exit code 1 threshold: any, low, medium, high, or critical (default: any)"
+    )
+    parser.add_argument(
+        "--db",
+        default=None,
+        help="Optional path to custom vulnerability database JSON file"
     )
 
     args = parser.parse_args()
@@ -78,7 +89,8 @@ def main():
         enable_secret_scan=not args.dep_only,
         enable_dependency_scan=not args.secret_only,
         enable_context=not args.no_context,
-        enable_entropy=not args.no_entropy
+        enable_entropy=not args.no_entropy,
+        custom_vulnerability_db=args.db
     )
 
     def cli_progress(current: int, total: int, filename: str):
@@ -109,6 +121,8 @@ def main():
         output_text = ReportFormatter.to_markdown(report, lang=args.lang)
     elif args.format == "csv":
         output_text = ReportFormatter.to_csv(report)
+    elif args.format == "html":
+        output_text = ReportFormatter.to_html(report, lang=args.lang)
     else:
         output_text = ReportFormatter.to_console_summary(report, lang=args.lang, use_color=not args.no_color)
 
@@ -120,8 +134,28 @@ def main():
     else:
         print(output_text)
 
-    # Exit code: 1 if any findings discovered, else 0
-    sys.exit(1 if report.findings else 0)
+    # Determine exit code based on --fail-on threshold
+    SEVERITY_ORDER = {
+        "info": 0,
+        "low": 1,
+        "medium": 2,
+        "high": 3,
+        "critical": 4,
+    }
+    fail_on = args.fail_on.lower()
+    has_failure = False
+
+    if fail_on == "any":
+        has_failure = bool(report.findings)
+    else:
+        threshold_rank = SEVERITY_ORDER.get(fail_on, 1)
+        for f in report.findings:
+            sev_str = (f.severity.value if hasattr(f.severity, "value") else str(f.severity)).lower()
+            if SEVERITY_ORDER.get(sev_str, 0) >= threshold_rank:
+                has_failure = True
+                break
+
+    sys.exit(1 if has_failure else 0)
 
 
 if __name__ == "__main__":

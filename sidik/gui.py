@@ -8,7 +8,7 @@ Engineered with Python standard library (tkinter/ttk) and PIL:
 - Interactive click-to-filter rounded severity metric cards with glowing rims.
 - Segmented glass pill navigation bar replacing blocky rectangular tabs.
 - Quick-copy clipboard actions for remediation and code snippets.
-- Multi-format report export (Markdown, JSON, CSV).
+- Multi-format report export (Interactive HTML, Markdown, JSON, CSV).
 - Instant in-place bilingual switching (Bahasa Indonesia & English).
 """
 
@@ -2329,8 +2329,9 @@ class SecurityAnalyzerGUI:
         fpath = filedialog.asksaveasfilename(
             initialdir=os.path.join(BASE_DIR, "results"),
             title=t("dialog_export_title"),
-            defaultextension=".md",
+            defaultextension=".html",
             filetypes=[
+                ("Interactive HTML Report (*.html)", "*.html"),
                 ("Markdown Audit Report (*.md)", "*.md"),
                 ("Structured JSON (*.json)", "*.json"),
                 ("CSV Spreadsheet (*.csv)", "*.csv"),
@@ -2342,7 +2343,9 @@ class SecurityAnalyzerGUI:
 
         try:
             cur_lang = get_current_language()
-            if fpath.endswith(".json"):
+            if fpath.endswith(".html") or fpath.endswith(".htm"):
+                content = ReportFormatter.to_html(self.last_report, lang=cur_lang)
+            elif fpath.endswith(".json"):
                 content = ReportFormatter.to_json(self.last_report)
             elif fpath.endswith(".csv"):
                 content = ReportFormatter.to_csv(self.last_report)
