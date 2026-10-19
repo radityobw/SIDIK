@@ -1305,6 +1305,8 @@ class SecurityAnalyzerGUI:
             for item in self.tree.get_children():
                 self.tree.delete(item)
             self.lbl_filter_count.configure(text=t("showing_findings", visible=0, total=0))
+            self.detail_text.delete("1.0", tk.END)
+            self.detail_text.insert("1.0", t("msg_clean"))
             return
 
         kw = self.search_var.get().strip().lower()
