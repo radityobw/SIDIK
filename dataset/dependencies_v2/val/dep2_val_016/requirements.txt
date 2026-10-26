@@ -1,0 +1,5 @@
+# Generated for SIDIK benchmark v2
+httplib2shim==0.0.1
+zope==4.2
+lunary==1.0.14
+flair==0.4.0

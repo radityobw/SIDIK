@@ -1,0 +1,11 @@
+[project]
+name = "app-dep2_val_012"
+version = "0.1.0"
+dependencies = [
+    "ray==0.6.6",
+    "sanic-cors==0.4.1.2",
+    "mcp-server-git==2025.1.14",
+    "retrie==0.3.0",
+    "msrestazure==0.6.3",
+    "lmdb==0.80"
+]

@@ -1,0 +1,11 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+ragas = "==0.2.11"
+tfx-bsl = "==1.2.0"
+authzed = "==1.21.0"
+capstone = "==3.0"
+spdx-tools = "==0.6.0"
+collectfast = "==0.1.8"

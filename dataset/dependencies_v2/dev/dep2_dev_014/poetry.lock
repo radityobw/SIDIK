@@ -1,0 +1,35 @@
+[[package]]
+name = "mobsfscan"
+version = "0.3.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pymongo"
+version = "3.11.3"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "django-split-settings"
+version = "0.2.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "eth-account"
+version = "0.5.3"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "chemprop"
+version = "2.1.2"
+description = ""
+optional = false
+python-versions = "*"
+

@@ -1,0 +1,11 @@
+[project]
+name = "app-dep2_test_001"
+version = "0.1.0"
+dependencies = [
+    "oauth2==1.2.0",
+    "nucliadb-utils==1.0.7",
+    "mkdocs-material==9.0.10",
+    "tornado==2.2",
+    "langchain-classic==1.0.6",
+    "tensorflow==1.8.0"
+]

@@ -1,0 +1,42 @@
+[[package]]
+name = "cognee"
+version = "1.0.7"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "genshi"
+version = "0.7.8"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "agno"
+version = "3.1.1"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "azure-storage-queue"
+version = "12.0.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "google-cloud-dataform"
+version = "0.2.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "joblib"
+version = "1.5.3"
+description = ""
+optional = false
+python-versions = "*"
+

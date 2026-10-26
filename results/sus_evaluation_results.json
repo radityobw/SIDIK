@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "evaluation": "System Usability Scale (SUS) & User Experience",
+    "respondents_count": 18,
+    "respondent_profile": "Mahasiswa Informatika Universitas Sultan Ageng Tirtayasa",
+    "experience_years_mean": 2.56
+  },
+  "sus_metrics": {
+    "mean_score": 89.31,
+    "std_deviation": 10.1,
+    "median_score": 91.25,
+    "min_score": 72.5,
+    "max_score": 100.0,
+    "grade_rating": "Grade A",
+    "adjective_rating": "Excellent",
+    "acceptability": "Acceptable (>68)"
+  },
+  "domain_specific_items": {
+    "D1_remediation_clarity_mean": 4.61,
+    "D2_bilingual_ui_benefit_mean": 4.72,
+    "D3_reuse_intention_mean": 4.5
+  },
+  "individual_responses": [
+    {
+      "resp_id": "R01",
+      "exp_years": 3,
+      "sus_score": 97.5
+    },
+    {
+      "resp_id": "R02",
+      "exp_years": 2,
+      "sus_score": 82.5
+    },
+    {
+      "resp_id": "R03",
+      "exp_years": 4,
+      "sus_score": 97.5
+    },
+    {
+      "resp_id": "R04",
+      "exp_years": 1,
+      "sus_score": 77.5
+    },
+    {
+      "resp_id": "R05",
+      "exp_years": 3,
+      "sus_score": 97.5
+    },
+    {
+      "resp_id": "R06",
+      "exp_years": 2,
+      "sus_score": 82.5
+    },
+    {
+      "resp_id": "R07",
+      "exp_years": 3,
+      "sus_score": 100.0
+    },
+    {
+      "resp_id": "R08",
+      "exp_years": 2,
+      "sus_score": 82.5
+    },
+    {
+      "resp_id": "R09",
+      "exp_years": 4,
+      "sus_score": 100.0
+    },
+    {
+      "resp_id": "R10",
+      "exp_years": 2,
+      "sus_score": 72.5
+    },
+    {
+      "resp_id": "R11",
+      "exp_years": 3,
+      "sus_score": 95.0
+    },
+    {
+      "resp_id": "R12",
+      "exp_years": 1,
+      "sus_score": 77.5
+    },
+    {
+      "resp_id": "R13",
+      "exp_years": 3,
+      "sus_score": 100.0
+    },
+    {
+      "resp_id": "R14",
+      "exp_years": 2,
+      "sus_score": 87.5
+    },
+    {
+      "resp_id": "R15",
+      "exp_years": 4,
+      "sus_score": 100.0
+    },
+    {
+      "resp_id": "R16",
+      "exp_years": 2,
+      "sus_score": 77.5
+    },
+    {
+      "resp_id": "R17",
+      "exp_years": 3,
+      "sus_score": 100.0
+    },
+    {
+      "resp_id": "R18",
+      "exp_years": 2,
+      "sus_score": 80.0
+    }
+  ]
+}

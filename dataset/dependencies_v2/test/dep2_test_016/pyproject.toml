@@ -1,0 +1,10 @@
+[project]
+name = "app-dep2_test_016"
+version = "0.1.0"
+dependencies = [
+    "glances==4.5.2",
+    "xhtml2pdf==0.2.9",
+    "marshmallow==0.1.0",
+    "fastapi-sso==0.13.1",
+    "anyio==4.6.0"
+]

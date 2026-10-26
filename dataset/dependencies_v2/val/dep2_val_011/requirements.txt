@@ -1,0 +1,6 @@
+# Generated for SIDIK benchmark v2
+deepdiff==0.5.4
+python-binary-memcached==0.13
+mariadb==1.1.2
+streamlink==0.1.0
+pytorch-ranger==0.1.0

@@ -1,0 +1,9 @@
+[project]
+name = "app-dep2_dev_002"
+version = "0.1.0"
+dependencies = [
+    "os-client-config==0.8.2",
+    "jupyter-console==6.4.2",
+    "omnivoice==0.2.0",
+    "nglview==2.1.0"
+]

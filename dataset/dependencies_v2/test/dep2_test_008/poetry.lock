@@ -1,0 +1,42 @@
+[[package]]
+name = "awxkit"
+version = "22.6.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "tqdm"
+version = "4.34.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "influxdb-client"
+version = "1.25.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "qcodes"
+version = "0.19.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "flexpolyline"
+version = "0.1.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "django-admin-sortable2"
+version = "0.7.7"
+description = ""
+optional = false
+python-versions = "*"
+

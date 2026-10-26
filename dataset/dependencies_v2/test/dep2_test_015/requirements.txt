@@ -1,0 +1,5 @@
+# Generated for SIDIK benchmark v2
+pdoc==6.4.2
+composio-openai==0.12.0
+pygresql==4.0
+suds==1.0.0

@@ -1,0 +1,41 @@
+[
+  {
+    "tool": "SIDIK (Usulan - Offline)",
+    "evaluated_entries": 200,
+    "tp": 100,
+    "fp": 0,
+    "tn": 100,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "fpr": 0.0,
+    "scan_time_seconds": 0.3349
+  },
+  {
+    "tool": "Trivy (v0.76.1)",
+    "evaluated_entries": 200,
+    "tp": 35,
+    "fp": 0,
+    "tn": 100,
+    "fn": 65,
+    "precision": 1.0,
+    "recall": 0.35,
+    "f1_score": 0.5185,
+    "fpr": 0.0,
+    "scan_time_seconds": 132.0017
+  },
+  {
+    "tool": "pip-audit (v2.10.1 - req only)",
+    "evaluated_entries": 37,
+    "tp": 0,
+    "fp": 0,
+    "tn": 20,
+    "fn": 17,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "fpr": 0.0,
+    "scan_time_seconds": 0.1485
+  }
+]

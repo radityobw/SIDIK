@@ -1,0 +1,7 @@
+# Generated for SIDIK benchmark v2
+reportlab==3.5.45
+opcua==0.98.11
+betterproto==1.2.4
+pypdf2==2.1.0
+virtualenv==20.7.1
+azure-storage-queue==12.7.1

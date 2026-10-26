@@ -1,0 +1,35 @@
+[[package]]
+name = "slixmpp"
+version = "1.4.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "opentelemetry-instrumentation-replicate"
+version = "0.21.3"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "unittest2"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "bx-python"
+version = "0.13.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "concurrent-log-handler"
+version = "0.9.22"
+description = ""
+optional = false
+python-versions = "*"
+

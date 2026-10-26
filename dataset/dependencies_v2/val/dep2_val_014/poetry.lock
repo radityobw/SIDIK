@@ -1,0 +1,28 @@
+[[package]]
+name = "mem0ai"
+version = "0.0.7"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "jupyterlab-git"
+version = "0.53.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "python-liquid"
+version = "2.3.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pybind11-stubgen"
+version = "0.11.0"
+description = ""
+optional = false
+python-versions = "*"
+

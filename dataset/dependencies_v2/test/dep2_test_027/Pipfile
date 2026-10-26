@@ -1,0 +1,9 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+microsoft-kiota-serialization-text = "==1.6.3"
+jaraco-classes = "==3.0.0"
+comfy-cli = "==1.5.2"
+livekit-plugins-inworld = "==1.8.8"

@@ -1,0 +1,11 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+awsiotsdk = "==1.31.0"
+safety = "==1.8.2"
+ydata-profiling = "==4.14.0"
+eth-account = "==0.6.1"
+filestack-python = "==2.8.1"
+colcon-ros = "==0.3.13"

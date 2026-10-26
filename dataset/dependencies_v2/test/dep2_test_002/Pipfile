@@ -1,0 +1,10 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+flask-restful = "==0.1.6"
+klaviyo-api = "==8.0.1"
+nbdime = "==3.1.0"
+ddtrace = "==0.61.4"
+pyvcd = "==0.1.6"

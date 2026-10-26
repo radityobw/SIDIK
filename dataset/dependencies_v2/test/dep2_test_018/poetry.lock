@@ -1,0 +1,42 @@
+[[package]]
+name = "easydev"
+version = "0.9.9"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pytorch"
+version = "1.0.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "opencolorio"
+version = "2.1.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "uwsgi"
+version = "2.0.14"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pycountry"
+version = "18.5.26"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "mypy-boto3-codecommit"
+version = "1.17.21.0"
+description = ""
+optional = false
+python-versions = "*"
+

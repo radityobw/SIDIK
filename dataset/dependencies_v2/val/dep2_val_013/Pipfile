@@ -1,0 +1,11 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+google-cloud-iam = "==2.15.1"
+ansicolors = "==1.0.1"
+recordclass = "==0.21.1"
+bbot = "==2.3.1"
+pypdf = "==1.9"
+deepdiff = "==6.6.0"

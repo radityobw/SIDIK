@@ -1,0 +1,35 @@
+[[package]]
+name = "types-objgraph"
+version = "3.6.0.20260408"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pyrofork"
+version = "2.3.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "anki"
+version = "2.1.34"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "azure-cognitiveservices-vision-computervision"
+version = "0.2.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pypiserver"
+version = "1.2.7"
+description = ""
+optional = false
+python-versions = "*"
+

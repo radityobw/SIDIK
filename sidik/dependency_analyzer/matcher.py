@@ -28,7 +28,7 @@ def normalize_version_specifier(raw_spec: str) -> str:
         try:
             v = Version(v_str)
             next_minor = v.minor + 1
-            return f">={v_str},{v.major}.{next_minor}.0"
+            return f">={v_str},<{v.major}.{next_minor}.0"
         except InvalidVersion:
             return f">={v_str}"
 

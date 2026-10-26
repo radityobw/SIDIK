@@ -1,0 +1,9 @@
+[project]
+name = "app-dep2_val_002"
+version = "0.1.0"
+dependencies = [
+    "ripgrep-bin==15.2.0",
+    "dulwich==1.2.5",
+    "weave==0.50.15",
+    "ssh-import-id==4.5"
+]

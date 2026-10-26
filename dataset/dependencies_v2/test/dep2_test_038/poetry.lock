@@ -1,0 +1,28 @@
+[[package]]
+name = "sentry-sdk"
+version = "2.10.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "tuf"
+version = "0.10.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "django-versatileimagefield"
+version = "0.4"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "altcha"
+version = "0.1.7"
+description = ""
+optional = false
+python-versions = "*"
+

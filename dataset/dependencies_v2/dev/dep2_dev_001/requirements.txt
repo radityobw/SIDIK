@@ -1,0 +1,7 @@
+# Generated for SIDIK benchmark v2
+b2sdk==1.1.0
+py-rattler==0.28.0
+fiftyone==0.25.2
+torchdyn==1.0.2
+json-datetime==0.0.3
+crc32c-rs==0.0.1

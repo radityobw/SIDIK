@@ -1,0 +1,9 @@
+[project]
+name = "app-dep2_test_011"
+version = "0.1.0"
+dependencies = [
+    "pypiserver==1.0.1",
+    "maigret==0.4.1",
+    "django-navhelper==0.1",
+    "robocorp-storage==1.0.1"
+]

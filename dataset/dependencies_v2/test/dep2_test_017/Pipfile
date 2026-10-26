@@ -1,0 +1,10 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+python-i18n = "==0.3.2"
+pytrends-modern = "==0.2.12"
+qiskit-ibm-runtime = "==0.21.0"
+mammoth = "==1.4.13"
+uefi-firmware = "==1.15"

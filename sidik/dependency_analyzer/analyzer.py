@@ -57,15 +57,20 @@ class DependencyAnalyzer:
 
         for spec in specs:
             advisories = self.db.get_advisories(spec.package_name)
+            reported: set[str] = set()
             for adv in advisories:
+                cve_id = adv.get("cve") or adv["id"]
+                if cve_id in reported:
+                    continue
                 vuln, reason = is_version_vulnerable(spec.specifier, adv["vulnerable_specifier"])
                 if vuln:
-                    finding_id = f"DEP-{adv['cve']}-{abs(hash(file_path + spec.package_name + spec.specifier)) % 100000:05d}"
+                    reported.add(cve_id)
+                    finding_id = f"DEP-{cve_id}-{abs(hash(file_path + spec.package_name + spec.specifier)) % 100000:05d}"
                     manifest_name = os.path.basename(file_path)
                     fixed_ver = adv.get("fixed_version")
                     remediation = get_dependency_remediation(
                         package_name=spec.package_name,
-                        cve_id=adv["cve"],
+                        cve_id=cve_id,
                         fixed_version=fixed_ver,
                         manifest_file=manifest_name
                     )
@@ -74,7 +79,7 @@ class DependencyAnalyzer:
                         id=finding_id,
                         finding_type="dependency",
                         category="VULNERABLE_DEPENDENCY",
-                        title=f"Vulnerable Dependency: {spec.package_name} ({adv['cve']})",
+                        title=f"Vulnerable Dependency: {spec.package_name} ({cve_id})",
                         description=adv["summary"],
                         file_path=file_path,
                         line_number=spec.line_number if spec.line_number > 0 else None,
@@ -85,7 +90,7 @@ class DependencyAnalyzer:
                         metadata={
                             "package": spec.package_name,
                             "declared_version": spec.specifier,
-                            "cve": adv["cve"],
+                            "cve": cve_id,
                             "advisory_id": adv["id"],
                             "vulnerable_specifier": adv["vulnerable_specifier"],
                             "fixed_version": adv.get("fixed_version"),

@@ -1,0 +1,28 @@
+[[package]]
+name = "pytest-timeout"
+version = "2.3.1"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "untangle"
+version = "1.0.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "marshmallow"
+version = "2.16.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "spotipy"
+version = "2.3.5"
+description = ""
+optional = false
+python-versions = "*"
+

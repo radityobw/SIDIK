@@ -1,0 +1,6 @@
+# Generated for SIDIK benchmark v2
+fastremap==1.6.0
+composio-core==0.3.10
+pysha3==0.1
+apache-airflow-providers-amazon==9.10.0
+aistore==1.12.1

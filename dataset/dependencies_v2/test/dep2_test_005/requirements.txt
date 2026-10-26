@@ -1,0 +1,7 @@
+# Generated for SIDIK benchmark v2
+vercel-runtime==0.3.0
+rstcheck-core==1.2.1
+embedchain==0.0.71
+ob-metaflow==2.10.7.4
+simpleeval==0.9.5
+headroom-ai==0.5.24

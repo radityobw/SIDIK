@@ -185,28 +185,147 @@ def plot_performance_overhead(exp_data):
     print(f"Saved: {out_path}")
 
 
+def plot_comparative_industry_tools():
+    """Figure 5: Secret and SCA Benchmark against Industry Tools."""
+    sec_file = os.path.join(RESULTS_DIR, "secret_comparative_benchmark.json")
+    sca_file = os.path.join(RESULTS_DIR, "sca_comparative_benchmark.json")
+    if not os.path.isfile(sec_file) or not os.path.isfile(sca_file):
+        return
+
+    sec_data = json.load(open(sec_file, encoding="utf-8"))
+    sca_data = json.load(open(sca_file, encoding="utf-8"))
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 4.0), dpi=300)
+
+    # Subplot 1: Secret Scanners FPR and Execution Time
+    tools_sec = [d["tool"].replace(" (v8.30.1)", "").replace(" (v1.9.4)", "").replace(" (Usulan)", "") for d in sec_data]
+    fprs = [d["fpr"] * 100 for d in sec_data]
+    times = [d["total_time_seconds"] for d in sec_data]
+
+    x = np.arange(len(tools_sec))
+    width = 0.38
+
+    b1 = ax1.bar(x - width/2, fprs, width, label='False Positive Rate (%)', color='#e74c3c', edgecolor='black', linewidth=0.8)
+    b2 = ax1.bar(x + width/2, times, width, label='Scan Time (s)', color='#3498db', edgecolor='black', linewidth=0.8)
+
+    ax1.set_ylabel('Percentage / Seconds')
+    ax1.set_title('Secret Detection: FPR vs. Scan Time (N=25 Repos)')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(tools_sec, fontsize=8)
+    ax1.grid(axis='y', linestyle='--', alpha=0.5)
+    ax1.legend(loc='upper left', frameon=True)
+
+    for b in b1:
+        h = b.get_height()
+        ax1.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width()/2, h),
+                     xytext=(0, 2), textcoords="offset points", ha='center', va='bottom', fontsize=7, fontweight='bold')
+    for b in b2:
+        h = b.get_height()
+        ax1.annotate(f"{h:.1f}s", xy=(b.get_x() + b.get_width()/2, h),
+                     xytext=(0, 2), textcoords="offset points", ha='center', va='bottom', fontsize=7, fontweight='bold')
+
+    # Subplot 2: SCA Detection F1-Score & Latency
+    tools_sca = [d["tool"].split(" (")[0] for d in sca_data]
+    f1s = [d["f1_score"] * 100 for d in sca_data]
+    sca_times = [d["scan_time_seconds"] for d in sca_data]
+
+    x2 = np.arange(len(tools_sca))
+    b3 = ax2.bar(x2 - width/2, f1s, width, label='F1-Score (%)', color='#2ecc71', edgecolor='black', linewidth=0.8)
+    b4 = ax2.bar(x2 + width/2, sca_times, width, label='Scan Time (s)', color='#9b59b6', edgecolor='black', linewidth=0.8)
+
+    ax2.set_ylabel('Percentage / Seconds')
+    ax2.set_title('SCA Benchmark: F1-Score vs. Latency (N=200)')
+    ax2.set_xticks(x2)
+    ax2.set_xticklabels(tools_sca, fontsize=8)
+    ax2.grid(axis='y', linestyle='--', alpha=0.5)
+    ax2.legend(loc='upper right', frameon=True)
+
+    for b in b3:
+        h = b.get_height()
+        ax2.annotate(f"{h:.1f}%", xy=(b.get_x() + b.get_width()/2, h),
+                     xytext=(0, 2), textcoords="offset points", ha='center', va='bottom', fontsize=7, fontweight='bold')
+    for b in b4:
+        h = b.get_height()
+        ax2.annotate(f"{h:.1f}s", xy=(b.get_x() + b.get_width()/2, h),
+                     xytext=(0, 2), textcoords="offset points", ha='center', va='bottom', fontsize=7, fontweight='bold')
+
+    fig.tight_layout()
+    out_path = os.path.join(FIGURES_DIR, "fig5_comparative_industry_tools.png")
+    plt.savefig(out_path)
+    plt.close()
+    print(f"Saved: {out_path}")
+
+
+def plot_sus_evaluation():
+    """Figure 6: System Usability Scale (SUS) Score Distribution and Questionnaire Response."""
+    sus_file = os.path.join(RESULTS_DIR, "sus_evaluation_results.json")
+    if not os.path.isfile(sus_file):
+        return
+
+    sus_data = json.load(open(sus_file, encoding="utf-8"))
+    scores = [r["sus_score"] for r in sus_data["individual_responses"]]
+    mean_val = sus_data["sus_metrics"]["mean_score"]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.8), dpi=300)
+
+    # Subplot 1: Score distribution with thresholds
+    n, bins, patches = ax1.hist(scores, bins=8, color='#3498db', edgecolor='black', alpha=0.85)
+    ax1.axvline(68.0, color='#e67e22', linestyle='--', linewidth=1.5, label='Acceptable Baseline (68.0)')
+    ax1.axvline(80.3, color='#2ecc71', linestyle='-.', linewidth=1.5, label='Grade A / Excellent (80.3)')
+    ax1.axvline(mean_val, color='#e74c3c', linestyle='-', linewidth=2.0, label=f'Mean Score ({mean_val:.1f})')
+    ax1.set_xlabel('SUS Score (0 - 100)')
+    ax1.set_ylabel('Frequency (Respondents)')
+    ax1.set_title('System Usability Scale (SUS) Score Distribution (N=18)')
+    ax1.grid(axis='y', linestyle='--', alpha=0.5)
+    ax1.legend(loc='upper left', fontsize=8, frameon=True)
+
+    # Subplot 2: Domain-specific Ratings
+    d_items = ['Remediation\nClarity (D1)', 'Bilingual\nUI (D2)', 'Reuse\nIntention (D3)']
+    d_vals = [
+        sus_data['domain_specific_items']['D1_remediation_clarity_mean'],
+        sus_data['domain_specific_items']['D2_bilingual_ui_benefit_mean'],
+        sus_data['domain_specific_items']['D3_reuse_intention_mean']
+    ]
+    b = ax2.bar(d_items, d_vals, color=['#1abc9c', '#3498db', '#9b59b6'], edgecolor='black', width=0.45)
+    ax2.set_ylabel('Mean Likert Score (1.0 - 5.0)')
+    ax2.set_title('Targeted User Experience Evaluation')
+    ax2.set_ylim(0, 5.5)
+    ax2.grid(axis='y', linestyle='--', alpha=0.5)
+
+    for bar in b:
+        h = bar.get_height()
+        ax2.annotate(f"{h:.2f} / 5.0", xy=(bar.get_x() + bar.get_width()/2, h),
+                     xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8, fontweight='bold')
+
+    fig.tight_layout()
+    out_path = os.path.join(FIGURES_DIR, "fig6_sus_evaluation.png")
+    plt.savefig(out_path)
+    plt.close()
+    print(f"Saved: {out_path}")
+
+
 def main():
     exp_file = os.path.join(RESULTS_DIR, "experiment_results.json")
     abl_file = os.path.join(RESULTS_DIR, "ablation_results.json")
 
-    if not os.path.exists(exp_file):
-        print(f"Error: {exp_file} not found. Run run_experiments.py first.")
-        return
-
-    with open(exp_file, "r", encoding="utf-8") as f:
-        exp_data = json.load(f)
-
-    plot_detection_metrics_comparison(exp_data)
-    plot_confusion_matrices(exp_data)
-    plot_performance_overhead(exp_data)
+    if os.path.exists(exp_file):
+        with open(exp_file, "r", encoding="utf-8") as f:
+            exp_data = json.load(f)
+        plot_detection_metrics_comparison(exp_data)
+        plot_confusion_matrices(exp_data)
+        plot_performance_overhead(exp_data)
 
     if os.path.exists(abl_file):
         with open(abl_file, "r", encoding="utf-8") as f:
             abl_data = json.load(f)
         plot_ablation_study(abl_data)
 
+    plot_comparative_industry_tools()
+    plot_sus_evaluation()
     print("All scientific visualization figures generated successfully in figures/")
 
 
 if __name__ == "__main__":
     main()
+
+

@@ -1,0 +1,42 @@
+[[package]]
+name = "sse-starlette"
+version = "2.4.1"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "sqlite-vec"
+version = "0.1.1"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "django-registration"
+version = "2.5"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pyxdg"
+version = "0.25"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "odg-client"
+version = "0.4.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "python-ldap"
+version = "2.4.7"
+description = ""
+optional = false
+python-versions = "*"
+

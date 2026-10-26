@@ -1,0 +1,10 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+protego = "==0.5.0"
+praisonai = "==4.5.60"
+snowflake-sqlalchemy = "==1.11.0"
+django-js-reverse = "==0.7.1"
+datadog-logger = "==0.3.0"

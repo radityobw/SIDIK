@@ -42,6 +42,10 @@ pyrightconfig.json
 # Research drafts, internal guides & literature (Code-only repo)
 SIDIK-paper/
 
+# Third-party repositories cloned for external evaluation (metadata only is versioned)
+dataset/external/_repos/
+dataset/dependencies_v2/_cache.json.tmp
+
 # Operating System Files
 Thumbs.db
 ehthumbs.db

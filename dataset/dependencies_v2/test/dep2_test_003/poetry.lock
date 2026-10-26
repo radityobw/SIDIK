@@ -1,0 +1,28 @@
+[[package]]
+name = "types-geoip2"
+version = "3.0.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "gitpython"
+version = "2.0.8"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "langchain"
+version = "0.0.43"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "openapi-python-client"
+version = "0.11.1"
+description = ""
+optional = false
+python-versions = "*"
+

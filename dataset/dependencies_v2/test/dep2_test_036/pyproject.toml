@@ -1,0 +1,10 @@
+[project]
+name = "app-dep2_test_036"
+version = "0.1.0"
+dependencies = [
+    "requests-sse==0.1.0",
+    "llm==0.3",
+    "mkdocs-material==5.3.1",
+    "starlette-admin==0.5.5",
+    "dotenv==0.0.2"
+]

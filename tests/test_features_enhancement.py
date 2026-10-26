@@ -86,7 +86,7 @@ TEST_KEY = "AKIA9876543210FEDCB2"  # noqa: sidik
 '''
         findings = detector.scan_content(code)
         self.assertEqual(len(findings), 1)
-        self.assertIn("AKIA1234567890ABCDEF"[:4], findings[0].snippet)
+        self.assertIn("AKIA1234567890ABCDEF"[:4], findings[0].snippet or "")
 
 
 class TestHtmlReportFormatter(unittest.TestCase):

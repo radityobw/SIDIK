@@ -1,0 +1,11 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+google-cloud-aiplatform = "==1.134.0"
+astropy = "==7.0.2"
+apache-airflow = "==1.10.9"
+pypsa = "==1.2.1"
+aim = "==3.16.0"
+desktop-notifier = "==3.3.0"

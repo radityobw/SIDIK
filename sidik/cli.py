@@ -22,8 +22,8 @@ def main():
     )
     parser.add_argument(
         "--target", "-t",
-        required=True,
-        help="Path to file or directory to scan"
+        default=None,
+        help="Path to file or directory to scan (required unless --update-db or --db-info is used)"
     )
     parser.add_argument(
         "--output", "-o",
@@ -79,7 +79,34 @@ def main():
         help="Optional path to custom vulnerability database JSON file"
     )
 
+    parser.add_argument(
+        "--update-db",
+        action="store_true",
+        help="Download the latest Google OSV PyPI advisories into the bundled offline database, then exit"
+    )
+    parser.add_argument(
+        "--db-info",
+        action="store_true",
+        help="Show advisory database statistics (size, source, snapshot date), then exit"
+    )
+
     args = parser.parse_args()
+
+    if args.update_db:
+        from sidik.dependency_analyzer import osv_import
+        sys.exit(osv_import.main([]))
+
+    if args.db_info:
+        from sidik.dependency_analyzer.database import VulnerabilityDatabase
+        db = VulnerabilityDatabase(args.db)
+        print(f"Advisories : {db.advisory_count}")
+        print(f"Packages   : {db.package_count}")
+        print(f"Source     : {db.metadata.get('source', 'built-in only')}")
+        print(f"Snapshot   : {db.metadata.get('generated_utc', 'N/A')}")
+        sys.exit(0)
+
+    if not args.target:
+        parser.error("--target is required unless --update-db or --db-info is used")
 
     if not os.path.exists(args.target):
         print(f"Error: Target path '{args.target}' does not exist.", file=sys.stderr)

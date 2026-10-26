@@ -1,0 +1,42 @@
+[[package]]
+name = "openhands-ai"
+version = "0.20.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "asyncmy"
+version = "0.2.3"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "types-aiobotocore-verifiedpermissions"
+version = "2.5.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "pymdown-extensions"
+version = "10.21.2"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "fastapi"
+version = "0.24.0"
+description = ""
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "passagemath-bliss"
+version = "10.5.26"
+description = ""
+optional = false
+python-versions = "*"
+

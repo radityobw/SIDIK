@@ -1,0 +1,7 @@
+# Generated for SIDIK benchmark v2
+pocketsphinx==0.0.7
+tap-py==2.6
+bidict==0.22.1
+sentry-sdk==0.7.1
+django-multi-email-field==0.6.2
+ha-mcp==7.14.1

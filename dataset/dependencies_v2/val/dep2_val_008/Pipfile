@@ -1,0 +1,11 @@
+[[source]]
+url = "https://pypi.org/simple"
+name = "pypi"
+
+[packages]
+customtkinter = "==1.6"
+pyftpdlib = "==2.2.0"
+pygal = "==3.0.1"
+cdktf-cdktf-provider-aws = "==17.0.2"
+scrapy-ingest = "==1.8.0"
+phonenumberslite = "==8.12.26"

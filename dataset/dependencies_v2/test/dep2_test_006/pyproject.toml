@@ -1,0 +1,10 @@
+[project]
+name = "app-dep2_test_006"
+version = "0.1.0"
+dependencies = [
+    "ujson==5.7.0",
+    "pydrive2==1.15.4",
+    "pygresql==5.0.1",
+    "pikepdf==2.0.0",
+    "nrel-pysam==5.0.0"
+]

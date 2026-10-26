@@ -1,0 +1,7 @@
+# Generated for SIDIK benchmark v2
+g4f==8.3.1
+pyobjc-framework-ituneslibrary==7.0
+pyrad==2.0
+cheetah3==3.2.6
+pdfminer-six==20251107
+js2py==0.51

@@ -1,0 +1,11 @@
+[project]
+name = "app-dep2_test_021"
+version = "0.1.0"
+dependencies = [
+    "markdownify==0.11.5",
+    "pdiff==1.0.6",
+    "mlx==0.25.2",
+    "dash==4.1.0",
+    "azurefunctions-extensions-base==1.1.0",
+    "termstyle==0.1.11"
+]

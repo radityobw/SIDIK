@@ -1,0 +1,6 @@
+# Generated for SIDIK benchmark v2
+fastmcp==2.13.0.1
+amqtt==0.12.1
+vonage-subaccounts==1.0.3
+django-tinymce==3.7.1
+django-filer==2.2.2

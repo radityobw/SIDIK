@@ -1,0 +1,11 @@
+[project]
+name = "app-dep2_test_031"
+version = "0.1.0"
+dependencies = [
+    "x402==0.3.0",
+    "qiskit-ibm-runtime==0.41.0",
+    "astropy==2.0.9",
+    "black==26.5.1",
+    "hydra-core==0.11.0",
+    "youtube-dl==2013.12.26"
+]

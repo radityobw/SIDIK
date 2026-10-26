@@ -1,0 +1,5 @@
+# Generated for SIDIK benchmark v2
+mcp-server-git==2026.8.18
+openexr==3.2.12
+app-store-server-library==1.4.0
+dash-core-components==0.1.1
