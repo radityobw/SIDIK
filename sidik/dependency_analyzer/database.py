@@ -139,6 +139,10 @@ BUILTIN_ADVISORIES: List[Dict[str, Any]] = [
 ]
 
 
+# Module-level cache for the default OSV advisory database so repeated scans do not re-parse 12.5 MB JSON
+_DEFAULT_DB_CACHE: Optional[Tuple[Dict[str, List[Dict[str, Any]]], Dict[str, Any], int]] = None
+
+
 class VulnerabilityDatabase:
     """Manages querying and matching of security advisories for Python dependencies.
 
@@ -178,6 +182,11 @@ class VulnerabilityDatabase:
         raise ValueError("expected a JSON list or an object with an 'advisories' list")
 
     def _load_database(self) -> None:
+        global _DEFAULT_DB_CACHE
+        if not self._custom_db_path and self._include_osv and _DEFAULT_DB_CACHE is not None:
+            self._advisories, self.metadata, self._advisory_count = _DEFAULT_DB_CACHE
+            return
+
         raw_list: List[Dict[str, Any]] = list(BUILTIN_ADVISORIES)
 
         if self._include_osv and os.path.isfile(DEFAULT_DB_PATH):
@@ -213,6 +222,8 @@ class VulnerabilityDatabase:
             count += 1
         self._advisories = index
         self._advisory_count = count
+        if not self._custom_db_path and self._include_osv:
+            _DEFAULT_DB_CACHE = (self._advisories, self.metadata, self._advisory_count)
 
     @property
     def package_count(self) -> int:

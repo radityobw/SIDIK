@@ -42,6 +42,12 @@ def main():
         help="Disable ANSI color codes in terminal output"
     )
     parser.add_argument(
+        "--mode", "-m",
+        choices=["all", "secret", "secrets", "dep", "deps", "dependency", "dependencies"],
+        default="all",
+        help="Scan mode: all (default), secret (secret scan only), or dep/dependency (dependency scan only)"
+    )
+    parser.add_argument(
         "--secret-only",
         action="store_true",
         help="Perform secret detection scan only"
@@ -112,9 +118,13 @@ def main():
         print(f"Error: Target path '{args.target}' does not exist.", file=sys.stderr)
         sys.exit(2)
 
+    mode_val = (args.mode or "all").lower()
+    is_secret_only = args.secret_only or mode_val in ("secret", "secrets")
+    is_dep_only = args.dep_only or mode_val in ("dep", "deps", "dependency", "dependencies")
+
     scanner = SecurityScanner(
-        enable_secret_scan=not args.dep_only,
-        enable_dependency_scan=not args.secret_only,
+        enable_secret_scan=not is_dep_only,
+        enable_dependency_scan=not is_secret_only,
         enable_context=not args.no_context,
         enable_entropy=not args.no_entropy,
         custom_vulnerability_db=args.db
@@ -165,7 +175,7 @@ def main():
     SEVERITY_ORDER = {
         "info": 0,
         "low": 1,
-        "medium": 2,
+        "medium": 1,
         "high": 3,
         "critical": 4,
     }
@@ -175,6 +185,7 @@ def main():
     if fail_on == "any":
         has_failure = bool(report.findings)
     else:
+        SEVERITY_ORDER["medium"] = 2
         threshold_rank = SEVERITY_ORDER.get(fail_on, 1)
         for f in report.findings:
             sev_str = (f.severity.value if hasattr(f.severity, "value") else str(f.severity)).lower()

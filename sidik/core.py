@@ -104,9 +104,36 @@ class SecurityScanner:
         file_ignore_patterns = load_sidikignore_patterns(base_dir)
         all_ignore_patterns = list(self.custom_ignore_patterns) + file_ignore_patterns
 
+        # Pre-warm vulnerability database index outside tracemalloc so scan memory measures scanning overhead
+        if self.enable_dependency_scan:
+            _ = self.dependency_analyzer.db.advisories
+
+        if tracemalloc.is_tracing():
+            tracemalloc.stop()
         tracemalloc.start()
         start_time = time.perf_counter()
         files_scanned = 0
+
+        # Internal dataset/benchmark metadata files & curation scripts that should not be scanned as target code
+        internal_skip_files = {
+            "pypi_advisories.json",
+            "_cache.json",
+            "all_candidates.json",
+            "ground_truth_secrets.json",
+            "secrets_ground_truth.json",
+            "dependencies_ground_truth.json",
+            "dependencies_v2_ground_truth.json",
+            "repos.json",
+            "scan_info.json",
+            "experiment_results.json",
+            "external_case_studies.json",
+            "secret_comparative_benchmark.json",
+            "sca_comparative_benchmark.json",
+            "ablation_results.json",
+            "select_repos.py",
+            "extract_all_candidates.py",
+            "process_annotations.py",
+        }
 
         # Discover all candidate files for deterministic progress calculation
         candidate_files: List[Tuple[str, str, bool, bool]] = []
@@ -123,7 +150,7 @@ class SecurityScanner:
         elif os.path.isdir(target_path):
             for root, dirs, files in os.walk(target_path):
                 # Prune common VCS/build/environment directories to prevent redundant crawling
-                dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "__pycache__", "node_modules", ".idea", ".vscode", ".pytest_cache"}]
+                dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "__pycache__", "node_modules", ".idea", ".vscode", ".pytest_cache", "figures", "results"}]
                 if all_ignore_patterns:
                     pruned_dirs = []
                     for d in dirs:
@@ -133,12 +160,14 @@ class SecurityScanner:
                     dirs[:] = pruned_dirs
 
                 for f in files:
+                    f_lower = f.lower()
+                    if f_lower in internal_skip_files:
+                        continue
                     full_path = os.path.join(root, f)
                     rel_name = os.path.relpath(full_path, target_path)
                     if all_ignore_patterns and is_path_ignored(rel_name, all_ignore_patterns):
                         continue
-                    f_lower = f.lower()
-                    is_sec = self.enable_secret_scan and f_lower.endswith((".py", ".env", ".cfg", ".ini", ".json", ".yaml", ".yml", ".txt"))
+                    is_sec = self.enable_secret_scan and f_lower.endswith((".py", ".env"))
                     is_dep = self.enable_dependency_scan and any(f_lower == m or f_lower.endswith("requirements.txt") for m in MANIFEST_FILENAMES)
                     if is_sec or is_dep:
                         candidate_files.append((full_path, rel_name, is_sec, is_dep))

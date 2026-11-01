@@ -111,16 +111,24 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
 
     # Quick Presets
     "preset_secrets": {
-        "id": "📁 Sampel Secrets",
-        "en": "📁 Test Secrets"
+        "id": "📁 Uji Secrets (N=100)",
+        "en": "📁 Test Secrets (N=100)"
     },
     "preset_deps": {
-        "id": "📦 Sampel Dependensi",
-        "en": "📦 Test Manifests"
+        "id": "📦 Uji Dependensi v2",
+        "en": "📦 Test Manifests v2"
+    },
+    "preset_external_sec": {
+        "id": "🌐 25 Repo Eksternal (Secret)",
+        "en": "🌐 25 External Repos (Secret)"
+    },
+    "preset_external_full": {
+        "id": "🌐 25 Repo Eksternal (Full)",
+        "en": "🌐 25 External Repos (Full)"
     },
     "preset_root": {
-        "id": "🔍 Seluruh Repositori",
-        "en": "🔍 Project Root"
+        "id": "🔍 Kode Sumber SIDIK",
+        "en": "🔍 SIDIK Source Code"
     },
 
     # Live Search & Multi-Dimensional Filters
@@ -284,9 +292,21 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "id": "📋 Salin Kode",
         "en": "📋 Copy Snippet"
     },
+    "btn_copy_all_remediation": {
+        "id": "📋 Salin Semua Remediasi",
+        "en": "📋 Copy All Remediations"
+    },
+    "btn_copy_all_snippet": {
+        "id": "📋 Salin Semua Kode",
+        "en": "📋 Copy All Snippets"
+    },
     "toast_copied": {
         "id": "✅ Tersalin ke clipboard!",
         "en": "✅ Copied to clipboard!"
+    },
+    "toast_copied_all": {
+        "id": "✅ {count} item tersalin ke clipboard!",
+        "en": "✅ Copied {count} items to clipboard!"
     },
     "export_format_choice": {
         "id": "Pilih format berkas laporan yang ingin diekspor:",

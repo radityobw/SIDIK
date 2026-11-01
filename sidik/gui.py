@@ -976,8 +976,8 @@ class SecurityAnalyzerGUI:
 
         self.btn_preset_sec = RoundedPillButton(
             preset_row, text=t("preset_secrets"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "secrets", "test")),
-            width=145, height=26, bg_parent=COLORS["card"],
+            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "secrets", "test"), sec=True, dep=False),
+            width=155, height=26, bg_parent=COLORS["card"],
             fill_color=COLORS["card"], hover_color=COLORS["card2"],
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
             font=("Segoe UI", 8))
@@ -985,16 +985,34 @@ class SecurityAnalyzerGUI:
 
         self.btn_preset_dep = RoundedPillButton(
             preset_row, text=t("preset_deps"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "dependencies", "test")),
-            width=155, height=26, bg_parent=COLORS["card"],
+            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "dependencies_v2", "test"), sec=False, dep=True),
+            width=165, height=26, bg_parent=COLORS["card"],
             fill_color=COLORS["card"], hover_color=COLORS["card2"],
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
             font=("Segoe UI", 8))
         self.btn_preset_dep.pack(side="left", padx=3)
 
+        self.btn_preset_ext_sec = RoundedPillButton(
+            preset_row, text=t("preset_external_sec"),
+            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "external", "_repos"), sec=True, dep=False),
+            width=195, height=26, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color=COLORS["card2"],
+            border_color=COLORS["primary"], text_color=COLORS["primary_bright"],
+            font=("Segoe UI", 8, "bold"))
+        self.btn_preset_ext_sec.pack(side="left", padx=3)
+
+        self.btn_preset_ext_full = RoundedPillButton(
+            preset_row, text=t("preset_external_full"),
+            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "external", "_repos"), sec=True, dep=True),
+            width=185, height=26, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color=COLORS["card2"],
+            border_color=COLORS["card_border"], text_color=COLORS["fg2"],
+            font=("Segoe UI", 8))
+        self.btn_preset_ext_full.pack(side="left", padx=3)
+
         self.btn_preset_root = RoundedPillButton(
             preset_row, text=t("preset_root"),
-            command=lambda: self._set_preset(BASE_DIR),
+            command=lambda: self._set_preset(os.path.join(BASE_DIR, "sidik"), sec=True, dep=True),
             width=155, height=26, bg_parent=COLORS["card"],
             fill_color=COLORS["card"], hover_color=COLORS["card2"],
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
@@ -1175,7 +1193,9 @@ class SecurityAnalyzerGUI:
 
         columns = ("id", "type", "category", "severity", "confidence", "location", "title")
         self.tree = ttk.Treeview(tree_container, columns=columns, show="headings",
-                                  selectmode="browse", style="Treeview")
+                                  selectmode="extended", style="Treeview")
+        self.tree.bind("<Control-a>", self._select_all_findings)
+        self.tree.bind("<Control-A>", self._select_all_findings)
 
         col_cfg = [
             ("id",         t("col_id"),         130, "w"),
@@ -1219,6 +1239,24 @@ class SecurityAnalyzerGUI:
             font=("Segoe UI", 9, "bold"))
         self.lbl_detail_panel_title.pack(side="left")
 
+        self.btn_copy_all_rem = RoundedPillButton(
+            detail_hdr, text=t("btn_copy_all_remediation"),
+            command=self._copy_all_remediations,
+            width=185, height=28, bg_parent=COLORS["card"],
+            fill_color=COLORS["card2"], hover_color="#1a2540",
+            border_color=COLORS["primary"], text_color=COLORS["primary_bright"],
+            font=("Segoe UI", 8, "bold"))
+        self.btn_copy_all_rem.pack(side="right", padx=3)
+
+        self.btn_copy_all_snip = RoundedPillButton(
+            detail_hdr, text=t("btn_copy_all_snippet"),
+            command=self._copy_all_snippets,
+            width=160, height=28, bg_parent=COLORS["card"],
+            fill_color=COLORS["card2"], hover_color=COLORS["card_border"],
+            border_color=COLORS["card_border"], text_color=COLORS["fg"],
+            font=("Segoe UI", 8, "bold"))
+        self.btn_copy_all_snip.pack(side="right", padx=3)
+
         self.btn_copy_rem = RoundedPillButton(
             detail_hdr, text=t("btn_copy_remediation"),
             command=self._copy_active_remediation,
@@ -1256,9 +1294,13 @@ class SecurityAnalyzerGUI:
     # QUICK PRESETS & SEARCH / FILTER ENGINE
     # ==========================================
 
-    def _set_preset(self, path: str):
+    def _set_preset(self, path: str, sec: Optional[bool] = None, dep: Optional[bool] = None):
         self.target_entry.delete(0, tk.END)
         self.target_entry.insert(0, os.path.normpath(path))
+        if sec is not None and hasattr(self, "var_secret"):
+            self.var_secret.set(sec)
+        if dep is not None and hasattr(self, "var_dep"):
+            self.var_dep.set(dep)
         self.status_bar.configure(text=f"Target path preset loaded: {path}")
 
     def _set_search_placeholder(self):
@@ -1375,33 +1417,108 @@ class SecurityAnalyzerGUI:
             self.detail_text.insert("1.0", t("msg_clean"))
 
     # ==========================================
-    # CLIPBOARD ACTIONS
+    # CLIPBOARD ACTIONS (SINGLE, MULTI-SELECT, & ALL VISIBLE FLAGS)
     # ==========================================
 
-    def _get_active_finding(self) -> Optional[Finding]:
+    def _select_all_findings(self, _event=None):
+        if hasattr(self, "tree"):
+            items = self.tree.get_children()
+            if items:
+                self.tree.selection_set(items)
+        return "break"
+
+    def _get_selected_findings(self) -> List[Finding]:
         if not hasattr(self, "tree") or not self.last_report:
-            return None
+            return []
         selected = self.tree.selection()
         if not selected:
-            return None
-        fid = selected[0]
-        return next((f for f in self.last_report.findings if f.id == fid), None)
+            return []
+        sel_set = set(selected)
+        return [f for f in self.visible_findings if f.id in sel_set] or [f for f in self.last_report.findings if f.id in sel_set]
+
+    def _get_active_finding(self) -> Optional[Finding]:
+        selected_list = self._get_selected_findings()
+        return selected_list[0] if selected_list else None
+
+    def _resolve_remediation_text(self, finding: Finding) -> str:
+        cur_lang = get_current_language()
+        remediation_text = finding.remediation or ""
+        if finding.finding_type == "secret" and "rule_id" in finding.metadata:
+            remediation_text = get_secret_remediation(finding.metadata["rule_id"], lang=cur_lang) or remediation_text
+        elif finding.finding_type == "dependency" and "cve" in finding.metadata:
+            remediation_text = get_dependency_remediation(
+                package_name=finding.metadata.get("package", ""),
+                cve_id=finding.metadata.get("cve", ""),
+                fixed_version=finding.metadata.get("fixed_version"),
+                manifest_file=os.path.basename(finding.file_path) if finding.file_path else None,
+                lang=cur_lang
+            ) or remediation_text
+        return remediation_text
 
     def _copy_active_remediation(self):
-        finding = self._get_active_finding()
-        if not finding or not finding.remediation:
+        selected_list = self._get_selected_findings()
+        if not selected_list:
             return
-        self.root.clipboard_clear()
-        self.root.clipboard_append(finding.remediation)
-        self._show_toast(t("toast_copied"))
+        if len(selected_list) == 1:
+            rem = self._resolve_remediation_text(selected_list[0])
+            if not rem:
+                return
+            self.root.clipboard_clear()
+            self.root.clipboard_append(rem)
+            self._show_toast(t("toast_copied"))
+        else:
+            self._copy_remediations_for_list(selected_list)
 
     def _copy_active_snippet(self):
-        finding = self._get_active_finding()
-        if not finding or not finding.snippet:
+        selected_list = self._get_selected_findings()
+        if not selected_list:
+            return
+        if len(selected_list) == 1:
+            finding = selected_list[0]
+            if not finding.snippet:
+                return
+            self.root.clipboard_clear()
+            self.root.clipboard_append(finding.snippet)
+            self._show_toast(t("toast_copied"))
+        else:
+            self._copy_snippets_for_list(selected_list)
+
+    def _copy_remediations_for_list(self, findings_list: List[Finding]):
+        blocks = []
+        for idx, f in enumerate(findings_list, 1):
+            rem = self._resolve_remediation_text(f)
+            if rem:
+                loc = f"{f.file_path}:{f.line_number}" if f.line_number else f.file_path
+                blocks.append(f"[{idx}] {f.id} | {f.title} ({loc})\n{rem}")
+        if not blocks:
             return
         self.root.clipboard_clear()
-        self.root.clipboard_append(finding.snippet)
-        self._show_toast(t("toast_copied"))
+        self.root.clipboard_append("\n\n".join(blocks))
+        self._show_toast(t("toast_copied_all", count=len(blocks)))
+
+    def _copy_snippets_for_list(self, findings_list: List[Finding]):
+        blocks = []
+        for idx, f in enumerate(findings_list, 1):
+            if f.snippet:
+                loc = f"{f.file_path}:{f.line_number}" if f.line_number else f.file_path
+                blocks.append(f"# [{idx}] {f.id} | {f.title} ({loc})\n{f.snippet}")
+        if not blocks:
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append("\n\n".join(blocks))
+        self._show_toast(t("toast_copied_all", count=len(blocks)))
+
+    def _copy_all_remediations(self):
+        target_list = self.visible_findings if self.visible_findings else (self.last_report.findings if self.last_report else [])
+        if not target_list:
+            return
+        self._copy_remediations_for_list(target_list)
+
+    def _copy_all_snippets(self):
+        target_list = self.visible_findings if self.visible_findings else (self.last_report.findings if self.last_report else [])
+        if not target_list:
+            return
+        self._copy_snippets_for_list(target_list)
 
     def _show_toast(self, message: str):
         self.lbl_toast.configure(text=message)
@@ -1823,6 +1940,10 @@ class SecurityAnalyzerGUI:
         self.btn_file.set_text(t("btn_browse_file"))
         self.btn_preset_sec.set_text(t("preset_secrets"))
         self.btn_preset_dep.set_text(t("preset_deps"))
+        if hasattr(self, "btn_preset_ext_sec"):
+            self.btn_preset_ext_sec.set_text(t("preset_external_sec"))
+        if hasattr(self, "btn_preset_ext_full"):
+            self.btn_preset_ext_full.set_text(t("preset_external_full"))
         self.btn_preset_root.set_text(t("preset_root"))
 
         self.chk_secret.configure(text=t("opt_secret"))
@@ -1863,6 +1984,10 @@ class SecurityAnalyzerGUI:
         self.lbl_detail_panel_title.configure(text=t("detail_panel_title"))
         self.btn_copy_rem.set_text(t("btn_copy_remediation"))
         self.btn_copy_snip.set_text(t("btn_copy_snippet"))
+        if hasattr(self, "btn_copy_all_rem"):
+            self.btn_copy_all_rem.set_text(t("btn_copy_all_remediation"))
+        if hasattr(self, "btn_copy_all_snip"):
+            self.btn_copy_all_snip.set_text(t("btn_copy_all_snippet"))
 
         # Research Tab & About Tab Texts
         if hasattr(self, "lbl_bundle_select"):
