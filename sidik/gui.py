@@ -136,35 +136,55 @@ def make_rounded_rect_image(width, height, radius, fill,
 
 
 class RoundedPillButton(tk.Canvas):
-    """Sleek anti-aliased pill button with hover, press, and disabled states."""
+    """Sleek anti-aliased pill button with auto-text-sizing, hover, active, press, and disabled states."""
 
     def __init__(self, parent, text: str, command: Optional[Callable] = None,
-                 width: int = 130, height: int = 32, radius: int = RADIUS_PILL,
+                 width: int = 80, height: int = 32, radius: int = RADIUS_PILL,
+                 pad_x: int = 26, pad_y: int = 10,
                  bg_parent: str = COLORS["card"],
                  fill_color: str = COLORS["card2"],
                  hover_color: str = "#1e2940",
                  border_color: str = COLORS["primary"],
+                 hover_border_color: str = COLORS["primary_bright"],
                  text_color: str = COLORS["primary_bright"],
+                 hover_text_color: str = "#ffffff",
+                 active_fill_color: str = "#16243d",
+                 active_border_color: str = COLORS["primary"],
+                 active_text_color: str = COLORS["primary_bright"],
+                 is_active: bool = False,
                  font: tuple = ("Segoe UI", 9, "bold")):
         super().__init__(parent, width=width, height=height, bg=bg_parent,
                          highlightthickness=0, bd=0, cursor="hand2")
         self.text = text
         self.command = command
+        self.min_w = 56
+        self.min_h = height
         self.w = width
         self.h = height
         self.r = radius
+        self.pad_x = pad_x
+        self.pad_y = pad_y
         self.bg_parent = bg_parent
         self.fill_color = fill_color
         self.hover_color = hover_color
         self.border_color = border_color
+        self.hover_border_color = hover_border_color
         self.text_color = text_color
+        self.hover_text_color = hover_text_color
+        self.active_fill_color = active_fill_color
+        self.active_border_color = active_border_color
+        self.active_text_color = active_text_color
         self.font = font
+        self.active_font = (font[0], font[1], "bold") if len(font) >= 2 else font
+        self.is_active = is_active
         self.is_hovered = False
         self.is_pressed = False
         self.is_disabled = False
         self._img_normal = None
+        self._img_active = None
         self._img_hover = None
         self._img_press = None
+        self._auto_size_to_text()
         self._pre_render()
         self._draw_state()
         self.bind("<Enter>", self._on_enter)
@@ -172,37 +192,81 @@ class RoundedPillButton(tk.Canvas):
         self.bind("<Button-1>", self._on_press)
         self.bind("<ButtonRelease-1>", self._on_release)
 
+    def _auto_size_to_text(self) -> bool:
+        """Measures the exact rendered pixel bounding box of self.text on the canvas
+        and updates self.w / self.h so the pill fits the text cleanly across all DPI scales.
+        """
+        tid = self.create_text(0, 0, text=self.text, font=self.active_font, anchor="nw")
+        bbox = self.bbox(tid)
+        self.delete(tid)
+        if bbox:
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+        else:
+            text_w = len(self.text) * 8
+            text_h = 18
+
+        new_w = max(self.min_w, text_w + self.pad_x)
+        new_h = max(self.min_h, text_h + self.pad_y)
+        changed = (new_w != self.w) or (new_h != self.h)
+        self.w = new_w
+        self.h = new_h
+        self.r = max(RADIUS_PILL, self.h // 2)
+        super().configure(width=self.w, height=self.h)
+        return changed
+
     def _pre_render(self):
         self._img_normal = make_glass_card_image(
             self.w, self.h, self.r, self.fill_color, self.border_color,
             overlay_alpha=10, border_width=1)
+        self._img_active = make_glass_card_image(
+            self.w, self.h, self.r, self.active_fill_color, self.active_border_color,
+            glow_top=self.active_border_color, overlay_alpha=18, border_width=1)
         self._img_hover = make_glass_card_image(
-            self.w, self.h, self.r, self.hover_color, self.border_color,
-            glow_top=self.border_color, overlay_alpha=20, border_width=1)
+            self.w, self.h, self.r, self.hover_color, self.hover_border_color,
+            glow_top=self.hover_border_color, overlay_alpha=24, border_width=1)
         self._img_press = make_glass_card_image(
-            self.w, self.h, self.r, self.border_color, self.border_color,
-            overlay_alpha=30, border_width=1)
+            self.w, self.h, self.r, self.hover_border_color, self.hover_border_color,
+            overlay_alpha=32, border_width=1)
 
     def _draw_state(self):
         self.delete("all")
         if self.is_disabled:
             img = self._img_normal
+            t_col = COLORS["fg3"]
+            fnt = self.font
         elif self.is_pressed:
             img = self._img_press
+            t_col = "#ffffff"
+            fnt = self.active_font
         elif self.is_hovered:
             img = self._img_hover
+            t_col = self.hover_text_color
+            fnt = self.active_font
+        elif self.is_active:
+            img = self._img_active
+            t_col = self.active_text_color
+            fnt = self.active_font
         else:
             img = self._img_normal
+            t_col = self.text_color
+            fnt = self.font
+
         if img:
             self.create_image(0, 0, image=img, anchor="nw")
         else:
             self.create_rectangle(0, 0, self.w, self.h,
                                   fill=self.fill_color, outline=self.border_color)
-        t_col = COLORS["fg3"] if self.is_disabled else (
-            "#ffffff" if self.is_pressed else self.text_color)
-        self.create_text(self.w // 2, self.h // 2, text=self.text, fill=t_col, font=self.font)
+        self.create_text(self.w // 2, self.h // 2, text=self.text, fill=t_col, font=fnt)
 
     def _on_enter(self, _):
+        try:
+            for sibling in self.master.winfo_children():
+                if isinstance(sibling, RoundedPillButton) and sibling is not self and sibling.is_hovered:
+                    sibling.is_hovered = False
+                    sibling._draw_state()
+        except Exception:
+            pass
         if not self.is_disabled:
             self.is_hovered = True
             self._draw_state()
@@ -218,16 +282,25 @@ class RoundedPillButton(tk.Canvas):
             self.is_pressed = True
             self._draw_state()
 
-    def _on_release(self, _):
+    def _on_release(self, event):
         if not self.is_disabled:
             was = self.is_pressed
             self.is_pressed = False
+            inside = (0 <= event.x <= self.w and 0 <= event.y <= self.h)
+            self.is_hovered = inside
             self._draw_state()
-            if was and self.command:
+            if was and inside and self.command:
                 self.command()
+
+    def set_active(self, active: bool):
+        if self.is_active != active:
+            self.is_active = active
+            self._draw_state()
 
     def set_text(self, new_text: str):
         self.text = new_text
+        if self._auto_size_to_text():
+            self._pre_render()
         self._draw_state()
 
     def configure(self, cnf: Any = None, **kwargs: Any) -> Any:
@@ -238,12 +311,19 @@ class RoundedPillButton(tk.Canvas):
                 if cnf == "text":
                     return self.text
                 return super().configure(cnf)
+        resized = False
         if "text" in kwargs:
             self.text = kwargs.pop("text")
+            resized = self._auto_size_to_text()
         if "state" in kwargs:
             state = kwargs.pop("state")
             self.is_disabled = (state == "disabled")
+            if self.is_disabled:
+                self.is_hovered = False
+                self.is_pressed = False
             self.config(cursor="" if self.is_disabled else "hand2")
+        if resized:
+            self._pre_render()
         self._draw_state()
         if kwargs:
             return super().configure(**kwargs)
@@ -441,9 +521,17 @@ class SegmentedTabBar(tk.Frame):
                            cursor="hand2", padx=18, pady=7)
             btn.pack(side="left", padx=2)
             btn.bind("<Button-1>", lambda e, i=idx: self.select_tab(i))
+            btn.bind("<Enter>", lambda e, i=idx: self._on_tab_hover(i, True))
+            btn.bind("<Leave>", lambda e, i=idx: self._on_tab_hover(i, False))
             self.buttons.append(btn)
 
         self._refresh_styles()
+
+    def _on_tab_hover(self, index: int, hovered: bool):
+        if index != self.active_index and 0 <= index < len(self.buttons):
+            self.buttons[index].configure(
+                bg=COLORS["card2"] if hovered else COLORS["card"],
+                fg=COLORS["fg"] if hovered else COLORS["fg2"])
 
     def select_tab(self, index: int):
         self.active_index = index
@@ -476,6 +564,7 @@ class RoundedDropdown(tk.Frame):
         super().__init__(parent, bg=bg_parent, highlightthickness=0)
         self._values = list(values)
         self._selected = values[0] if values else ""
+        self._min_width = width
         self._width = width
         self._height = height
         self._bg_parent = bg_parent
@@ -491,23 +580,30 @@ class RoundedDropdown(tk.Frame):
                                      bg=bg_parent, highlightthickness=0, bd=0,
                                      cursor="hand2")
         self._btn_canvas.pack()
-        # Auto-expand width to fit the longest item's text
-        try:
-            import tkinter.font as tkFont
-            fnt = tkFont.Font(family=font[0], size=font[1])
-            max_item_w = max((fnt.measure(v) for v in values), default=0)
-            needed = max_item_w + 48  # 12px left pad + text + 24px arrow area
-            if needed > self._width:
-                self._width = needed
-                self._btn_canvas.configure(width=self._width)
-        except Exception:
-            pass
+        self._fit_width_to_values()
         self._pre_render()
         self._draw_button()
 
         self._btn_canvas.bind("<Button-1>", self._toggle_popup)
         self._btn_canvas.bind("<Enter>", lambda _: self._set_hover(True))
         self._btn_canvas.bind("<Leave>", lambda _: self._set_hover(False))
+
+    def _fit_width_to_values(self):
+        """Measures exact canvas text bbox across all dropdown options and updates width."""
+        try:
+            max_item_w = 0
+            for v in self._values:
+                tid = self._btn_canvas.create_text(0, 0, text=v, font=self._font, anchor="nw")
+                bbox = self._btn_canvas.bbox(tid)
+                self._btn_canvas.delete(tid)
+                if bbox:
+                    max_item_w = max(max_item_w, bbox[2] - bbox[0])
+            needed = max(self._min_width, max_item_w + 46)
+            if needed != self._width:
+                self._width = needed
+                self._btn_canvas.configure(width=self._width)
+        except Exception:
+            pass
 
     def _pre_render(self):
         r = self._height // 2
@@ -696,6 +792,8 @@ class RoundedDropdown(tk.Frame):
         self._values = list(values)
         if self._selected not in self._values:
             self._selected = self._values[0] if self._values else ""
+        self._fit_width_to_values()
+        self._pre_render()
         self._draw_button()
 
 
@@ -709,8 +807,8 @@ class SecurityAnalyzerGUI:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("SIDIK - Secret Identification & Dependency Inspection Kit")
-        self.root.geometry("1200x820")
-        self.root.minsize(1000, 680)
+        self.root.geometry("1280x820")
+        self.root.minsize(1060, 680)
         self.root.configure(bg=COLORS["bg"])
 
         self.last_report: Optional[ScanReport] = None
@@ -976,48 +1074,66 @@ class SecurityAnalyzerGUI:
 
         self.btn_preset_sec = RoundedPillButton(
             preset_row, text=t("preset_secrets"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "secrets", "test"), sec=True, dep=False),
-            width=155, height=26, bg_parent=COLORS["card"],
-            fill_color=COLORS["card"], hover_color=COLORS["card2"],
+            command=lambda: self._set_preset(
+                os.path.join(BASE_DIR, "dataset", "secrets", "test"),
+                sec=True, dep=False, active_btn=self.btn_preset_sec),
+            height=28, pad_x=22, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color="#1a2540",
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
-            font=("Segoe UI", 8))
+            font=("Segoe UI", 8), is_active=True)
         self.btn_preset_sec.pack(side="left", padx=3)
 
         self.btn_preset_dep = RoundedPillButton(
             preset_row, text=t("preset_deps"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "dependencies_v2", "test"), sec=False, dep=True),
-            width=165, height=26, bg_parent=COLORS["card"],
-            fill_color=COLORS["card"], hover_color=COLORS["card2"],
+            command=lambda: self._set_preset(
+                os.path.join(BASE_DIR, "dataset", "dependencies_v2", "test"),
+                sec=False, dep=True, active_btn=self.btn_preset_dep),
+            height=28, pad_x=22, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color="#1a2540",
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
             font=("Segoe UI", 8))
         self.btn_preset_dep.pack(side="left", padx=3)
 
         self.btn_preset_ext_sec = RoundedPillButton(
             preset_row, text=t("preset_external_sec"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "external", "_repos"), sec=True, dep=False),
-            width=195, height=26, bg_parent=COLORS["card"],
-            fill_color=COLORS["card"], hover_color=COLORS["card2"],
-            border_color=COLORS["primary"], text_color=COLORS["primary_bright"],
-            font=("Segoe UI", 8, "bold"))
+            command=lambda: self._set_preset(
+                os.path.join(BASE_DIR, "dataset", "external", "_repos"),
+                sec=True, dep=False, active_btn=self.btn_preset_ext_sec),
+            height=28, pad_x=22, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color="#1a2540",
+            border_color=COLORS["card_border"], text_color=COLORS["fg2"],
+            font=("Segoe UI", 8))
         self.btn_preset_ext_sec.pack(side="left", padx=3)
 
         self.btn_preset_ext_full = RoundedPillButton(
             preset_row, text=t("preset_external_full"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "dataset", "external", "_repos"), sec=True, dep=True),
-            width=185, height=26, bg_parent=COLORS["card"],
-            fill_color=COLORS["card"], hover_color=COLORS["card2"],
+            command=lambda: self._set_preset(
+                os.path.join(BASE_DIR, "dataset", "external", "_repos"),
+                sec=True, dep=True, active_btn=self.btn_preset_ext_full),
+            height=28, pad_x=22, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color="#1a2540",
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
             font=("Segoe UI", 8))
         self.btn_preset_ext_full.pack(side="left", padx=3)
 
         self.btn_preset_root = RoundedPillButton(
             preset_row, text=t("preset_root"),
-            command=lambda: self._set_preset(os.path.join(BASE_DIR, "sidik"), sec=True, dep=True),
-            width=155, height=26, bg_parent=COLORS["card"],
-            fill_color=COLORS["card"], hover_color=COLORS["card2"],
+            command=lambda: self._set_preset(
+                os.path.join(BASE_DIR, "sidik"),
+                sec=True, dep=True, active_btn=self.btn_preset_root),
+            height=28, pad_x=22, bg_parent=COLORS["card"],
+            fill_color=COLORS["card"], hover_color="#1a2540",
             border_color=COLORS["card_border"], text_color=COLORS["fg2"],
             font=("Segoe UI", 8))
         self.btn_preset_root.pack(side="left", padx=3)
+
+        self._preset_buttons = [
+            self.btn_preset_sec,
+            self.btn_preset_dep,
+            self.btn_preset_ext_sec,
+            self.btn_preset_ext_full,
+            self.btn_preset_root,
+        ]
 
         opt_row = tk.Frame(ctrl_card, bg=COLORS["card"])
         opt_row.pack(fill="x", pady=(6, 0))
@@ -1252,17 +1368,17 @@ class SecurityAnalyzerGUI:
         self.btn_copy_all_rem = RoundedPillButton(
             detail_hdr, text=t("btn_copy_all_remediation"),
             command=self._copy_all_remediations,
-            width=185, height=28, bg_parent=COLORS["card"],
+            height=28, pad_x=24, bg_parent=COLORS["card"],
             fill_color=COLORS["card2"], hover_color="#1a2540",
-            border_color=COLORS["primary"], text_color=COLORS["primary_bright"],
+            border_color=COLORS["card_border"], text_color=COLORS["fg"],
             font=("Segoe UI", 8, "bold"))
         self.btn_copy_all_rem.pack(side="right", padx=3)
 
         self.btn_copy_all_snip = RoundedPillButton(
             detail_hdr, text=t("btn_copy_all_snippet"),
             command=self._copy_all_snippets,
-            width=160, height=28, bg_parent=COLORS["card"],
-            fill_color=COLORS["card2"], hover_color=COLORS["card_border"],
+            height=28, pad_x=24, bg_parent=COLORS["card"],
+            fill_color=COLORS["card2"], hover_color="#1a2540",
             border_color=COLORS["card_border"], text_color=COLORS["fg"],
             font=("Segoe UI", 8, "bold"))
         self.btn_copy_all_snip.pack(side="right", padx=3)
@@ -1270,17 +1386,17 @@ class SecurityAnalyzerGUI:
         self.btn_copy_rem = RoundedPillButton(
             detail_hdr, text=t("btn_copy_remediation"),
             command=self._copy_active_remediation,
-            width=148, height=28, bg_parent=COLORS["card"],
+            height=28, pad_x=24, bg_parent=COLORS["card"],
             fill_color=COLORS["card2"], hover_color="#1a2540",
-            border_color=COLORS["primary"], text_color=COLORS["primary_bright"],
+            border_color=COLORS["card_border"], text_color=COLORS["fg"],
             font=("Segoe UI", 8, "bold"))
         self.btn_copy_rem.pack(side="right", padx=3)
 
         self.btn_copy_snip = RoundedPillButton(
             detail_hdr, text=t("btn_copy_snippet"),
             command=self._copy_active_snippet,
-            width=128, height=28, bg_parent=COLORS["card"],
-            fill_color=COLORS["card2"], hover_color=COLORS["card_border"],
+            height=28, pad_x=24, bg_parent=COLORS["card"],
+            fill_color=COLORS["card2"], hover_color="#1a2540",
             border_color=COLORS["card_border"], text_color=COLORS["fg"],
             font=("Segoe UI", 8, "bold"))
         self.btn_copy_snip.pack(side="right", padx=3)
@@ -1304,13 +1420,17 @@ class SecurityAnalyzerGUI:
     # QUICK PRESETS & SEARCH / FILTER ENGINE
     # ==========================================
 
-    def _set_preset(self, path: str, sec: Optional[bool] = None, dep: Optional[bool] = None):
+    def _set_preset(self, path: str, sec: Optional[bool] = None,
+                    dep: Optional[bool] = None,
+                    active_btn: Optional[RoundedPillButton] = None):
         self.target_entry.delete(0, tk.END)
         self.target_entry.insert(0, os.path.normpath(path))
         if sec is not None and hasattr(self, "var_secret"):
             self.var_secret.set(sec)
         if dep is not None and hasattr(self, "var_dep"):
             self.var_dep.set(dep)
+        for btn in getattr(self, "_preset_buttons", []):
+            btn.set_active(btn is active_btn)
         self.status_bar.configure(text=f"Target path preset loaded: {path}")
 
     def _set_search_placeholder(self):
@@ -2042,6 +2162,8 @@ class SecurityAnalyzerGUI:
         if path:
             self.target_entry.delete(0, tk.END)
             self.target_entry.insert(0, os.path.normpath(path))
+            for btn in getattr(self, "_preset_buttons", []):
+                btn.set_active(False)
 
     def _browse_file(self):
         path = filedialog.askopenfilename(
@@ -2051,6 +2173,8 @@ class SecurityAnalyzerGUI:
         if path:
             self.target_entry.delete(0, tk.END)
             self.target_entry.insert(0, os.path.normpath(path))
+            for btn in getattr(self, "_preset_buttons", []):
+                btn.set_active(False)
 
     def _start_scan(self):
         if self.is_scanning:
