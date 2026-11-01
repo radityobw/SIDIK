@@ -41,3 +41,4 @@ include = ["sidik*"]
 
 [tool.setuptools.package-data]
 "sidik.data" = ["*.json"]
+

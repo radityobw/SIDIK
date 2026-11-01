@@ -9,3 +9,4 @@ if "%~1"=="" (
     python sidik.py %*
     pause
 )
+

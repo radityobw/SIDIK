@@ -75,3 +75,4 @@ runs:
           --format github \
           --fail-on "${{ inputs.fail-on }}" \
           --quiet
+

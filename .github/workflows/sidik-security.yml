@@ -47,3 +47,4 @@ jobs:
         with:
           name: sidik-sarif-report
           path: sidik-report.sarif
+
