@@ -1,11 +1,16 @@
-"""Command-line interface (CLI) for SIDIK: Secret Identification and Dependency Inspection Kit."""
+"""Command-line interface (CLI) and Interactive Terminal Console (TUI) for SIDIK."""
 
 import argparse
+import shlex
+import stat
+import subprocess
 import sys
 import os
-import stat
+from typing import Optional, List
 from sidik.core import SecurityScanner
+from sidik.models import ScanReport, Finding
 from sidik.reporting.formatter import ReportFormatter
+from sidik.i18n import get_secret_remediation, get_dependency_remediation
 
 VERSION = "1.0.0"
 
@@ -20,6 +25,51 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 exit 0
 """
+
+
+def _enable_windows_ansi() -> None:
+    """Enables UTF-8 and ANSI Virtual Terminal sequences on Windows consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfig = getattr(stream, "reconfigure", None)
+        if callable(reconfig):
+            try:
+                reconfig(encoding="utf-8")
+            except Exception:
+                pass
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            kernel32.SetConsoleOutputCP(65001)
+            kernel32.SetConsoleCP(65001)
+            handle = kernel32.GetStdHandle(-11)
+            mode = ctypes.c_ulong()
+            if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+                kernel32.SetConsoleMode(handle, mode.value | 0x0004)
+        except Exception:
+            pass
+
+
+def _copy_to_system_clipboard(text: str) -> bool:
+    """Copies text to the OS clipboard from the CLI without requiring a GUI window."""
+    if sys.platform == "win32":
+        try:
+            proc = subprocess.Popen(["clip"], stdin=subprocess.PIPE, close_fds=True)
+            proc.communicate(input=text.encode("utf-16-le"))
+            return proc.returncode == 0
+        except Exception:
+            pass
+    try:
+        import tkinter as tk
+        r = tk.Tk()
+        r.withdraw()
+        r.clipboard_clear()
+        r.clipboard_append(text)
+        r.update()
+        r.destroy()
+        return True
+    except Exception:
+        return False
 
 
 def install_git_hook(target_dir: str = ".") -> int:
@@ -42,20 +92,250 @@ def install_git_hook(target_dir: str = ".") -> int:
     return 0
 
 
-def main():
-    for stream in (sys.stdout, sys.stderr):
-        reconfig = getattr(stream, "reconfigure", None)
-        if callable(reconfig):
-            try:
-                reconfig(encoding="utf-8")
-            except Exception:
-                pass
+def run_interactive_cli(initial_lang: str = "id") -> int:
+    """Runs the interactive SIDIK CLI Window / Terminal User Interface (TUI)."""
+    _enable_windows_ansi()
+    if sys.platform == "win32":
+        os.system("title SIDIK CLI v1.0 - Interactive Static Security Console")
 
+    C_RESET = "\033[0m"
+    C_BOLD = "\033[1m"
+    C_DIM = "\033[2m"
+    C_CYAN = "\033[96m"
+    C_GREEN = "\033[92m"
+    C_YELLOW = "\033[93m"
+    C_RED = "\033[91m"
+    C_PURPLE = "\033[95m"
+    C_WHITE = "\033[97m"
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    lang = initial_lang
+    enable_context = True
+    enable_entropy = True
+    last_report: Optional[ScanReport] = None
+
+    def print_banner():
+        ctx_str = f"{C_GREEN}ON{C_RESET}" if enable_context else f"{C_RED}OFF{C_RESET}"
+        ent_str = f"{C_GREEN}ON{C_RESET}" if enable_entropy else f"{C_RED}OFF{C_RESET}"
+        last_str = (
+            f"{len(last_report.findings)} temuan ({last_report.summary.scan_duration_seconds}s)"
+            if last_report else ("Belum ada" if lang == "id" else "None")
+        )
+        print(f"\n{C_CYAN}╔════════════════════════════════════════════════════════════════════════════════╗{C_RESET}")
+        print(f"{C_CYAN}║{C_RESET}  {C_BOLD}{C_WHITE}🛡️  SIDIK CLI v{VERSION} - Secret Identification & Dependency Inspection Kit{C_RESET}      {C_CYAN}║{C_RESET}")
+        print(f"{C_CYAN}║{C_RESET}  {C_DIM}Lightweight Offline Python SAST & SCA | 29,208 OSV PyPI Advisories{C_RESET}           {C_CYAN}║{C_RESET}")
+        print(f"{C_CYAN}╠════════════════════════════════════════════════════════════════════════════════╣{C_RESET}")
+        print(f"{C_CYAN}║{C_RESET}  Bahasa: {C_BOLD}{lang.upper()}{C_RESET}  |  Filter Konteks: {ctx_str}  |  Entropi: {ent_str}  |  Scan Terakhir: {C_YELLOW}{last_str}{C_RESET}")
+        print(f"{C_CYAN}╚════════════════════════════════════════════════════════════════════════════════╝{C_RESET}")
+        if lang == "id":
+            print(f"  {C_BOLD}[1]{C_RESET} 🔍 Pindai Folder / Berkas Kustom (Input Path)")
+            print(f"  {C_BOLD}[2]{C_RESET} 📁 Preset: Uji Secrets Terkontrol (N=100 berkas | dataset/secrets/test)")
+            print(f"  {C_BOLD}[3]{C_RESET} 📦 Preset: Uji Dependensi PyPI v2 (N=200 entri  | dataset/dependencies_v2/test)")
+            print(f"  {C_BOLD}[4]{C_RESET} 🌐 Preset: 25 Repo GitHub Eksternal - Secret Only (1.193 berkas .py)")
+            print(f"  {C_BOLD}[5]{C_RESET} 🌐 Preset: 25 Repo GitHub Eksternal - Full Scan (Secret + 45 Manifes)")
+            print(f"  {C_BOLD}[6]{C_RESET} 🛡️  Preset: Audit Kode Sumber Internal SIDIK (sidik/)")
+            print(f"  {C_BOLD}[7]{C_RESET} 📋 Aksi Hasil Scan: Salin Semua Kode / Salin Semua Remediasi / Ekspor Laporan")
+            print(f"  {C_BOLD}[8]{C_RESET} ⚙️  Pengaturan: Toggle Konteks/Entropi, Bahasa (ID/EN), Info DB, Pre-Commit Hook")
+            print(f"  {C_BOLD}[9]{C_RESET} 🖥️  Buka Antarmuka Desktop GUI (Windowed Mode)")
+            print(f"  {C_BOLD}[0]{C_RESET} 🚪 Keluar  {C_DIM}(atau ketik perintah CLI langsung, misal: --target . --mode secret){C_RESET}")
+        else:
+            print(f"  {C_BOLD}[1]{C_RESET} 🔍 Scan Custom Folder / File Path")
+            print(f"  {C_BOLD}[2]{C_RESET} 📁 Preset: Controlled Secret Test Set (N=100 files | dataset/secrets/test)")
+            print(f"  {C_BOLD}[3]{C_RESET} 📦 Preset: PyPI Dependency Benchmark v2 (N=200     | dataset/dependencies_v2/test)")
+            print(f"  {C_BOLD}[4]{C_RESET} 🌐 Preset: 25 External GitHub Repos - Secret Only (1,193 .py files)")
+            print(f"  {C_BOLD}[5]{C_RESET} 🌐 Preset: 25 External GitHub Repos - Full Scan (Secrets + 45 Manifests)")
+            print(f"  {C_BOLD}[6]{C_RESET} 🛡️  Preset: Self-Audit SIDIK Source Code (sidik/)")
+            print(f"  {C_BOLD}[7]{C_RESET} 📋 Post-Scan Actions: Copy All Snippets / Copy All Remediations / Export Report")
+            print(f"  {C_BOLD}[8]{C_RESET} ⚙️  Settings: Toggle Context/Entropy, Language (ID/EN), OSV DB Info, Git Hook")
+            print(f"  {C_BOLD}[9]{C_RESET} 🖥️  Launch Desktop GUI Window")
+            print(f"  {C_BOLD}[0]{C_RESET} 🚪 Exit    {C_DIM}(or type any CLI flags directly, e.g.: --target . --mode secret){C_RESET}")
+        print(f"{C_DIM}{'─' * 82}{C_RESET}")
+
+    def execute_scan(target: str, sec: bool = True, dep: bool = True):
+        nonlocal last_report
+        if not os.path.exists(target):
+            print(f"{C_RED}[!] Path tidak ditemukan: {target}{C_RESET}")
+            return
+        scanner = SecurityScanner(
+            enable_secret_scan=sec,
+            enable_dependency_scan=dep,
+            enable_context=enable_context,
+            enable_entropy=enable_entropy
+        )
+
+        def progress(cur: int, tot: int, fname: str):
+            bar_len = 24
+            frac = (cur / tot) if tot > 0 else 0.0
+            filled = int(bar_len * frac)
+            bar = "█" * filled + "░" * (bar_len - filled)
+            short_f = fname if len(fname) <= 35 else "..." + fname[-32:]
+            sys.stdout.write(f"\r\033[K[*] [{bar}] {frac * 100:5.1f}% ({cur}/{tot}) {short_f}")
+            sys.stdout.flush()
+
+        report = scanner.scan_path(target, progress_callback=progress)
+        sys.stdout.write("\r\033[K")
+        sys.stdout.flush()
+        last_report = report
+        print(ReportFormatter.to_console_summary(report, lang=lang, use_color=True))
+        if report.findings:
+            print(f" {C_PURPLE}💡 Tip:{C_RESET} Ketik {C_BOLD}7{C_RESET}, {C_BOLD}copy code{C_RESET}, {C_BOLD}copy rem{C_RESET}, atau {C_BOLD}export hasil.html{C_RESET} untuk menyalin/mengekspor seluruh temuan.")
+
+    def copy_all_items(mode: str):
+        if not last_report or not last_report.findings:
+            print(f"{C_YELLOW}[!] Belum ada temuan untuk disalin. Jalankan pemindaian terlebih dahulu.{C_RESET}")
+            return
+        blocks = []
+        for idx, f in enumerate(last_report.findings, 1):
+            loc = f"{f.file_path}:{f.line_number}" if f.line_number else f.file_path
+            if mode == "code":
+                if f.snippet:
+                    blocks.append(f"# [{idx}] {f.id} | {f.title} ({loc})\n{f.snippet}")
+            else:
+                rem = f.remediation or ""
+                if f.finding_type == "secret" and "rule_id" in f.metadata:
+                    rem = get_secret_remediation(f.metadata["rule_id"], lang=lang) or rem
+                elif f.finding_type == "dependency" and "cve" in f.metadata:
+                    rem = get_dependency_remediation(
+                        package_name=f.metadata.get("package", ""),
+                        cve_id=f.metadata.get("cve", ""),
+                        fixed_version=f.metadata.get("fixed_version"),
+                        manifest_file=os.path.basename(f.file_path) if f.file_path else None,
+                        lang=lang
+                    ) or rem
+                if rem:
+                    blocks.append(f"[{idx}] {f.id} | {f.title} ({loc})\n{rem}")
+        if not blocks:
+            print(f"{C_YELLOW}[!] Tidak ada konten yang tersedia untuk disalin.{C_RESET}")
+            return
+        ok = _copy_to_system_clipboard("\n\n".join(blocks))
+        if ok:
+            print(f"{C_GREEN}[OK] Berhasil menyalin {len(blocks)} item ke clipboard sistem!{C_RESET}")
+        else:
+            print(f"{C_RED}[!] Gagal mengakses clipboard sistem.{C_RESET}")
+
+    def export_interactive(out_path: str):
+        if not last_report:
+            print(f"{C_YELLOW}[!] Belum ada hasil pemindaian untuk diekspor.{C_RESET}")
+            return
+        ext = os.path.splitext(out_path)[1].lower()
+        if ext in (".html", ".htm"):
+            content = ReportFormatter.to_html(last_report, lang=lang)
+        elif ext == ".sarif":
+            content = ReportFormatter.to_sarif(last_report)
+        elif ext == ".json":
+            content = ReportFormatter.to_json(last_report)
+        elif ext == ".csv":
+            content = ReportFormatter.to_csv(last_report)
+        elif ext == ".md":
+            content = ReportFormatter.to_markdown(last_report, lang=lang)
+        else:
+            content = ReportFormatter.to_console_summary(last_report, lang=lang, use_color=False)
+        out_abs = os.path.abspath(out_path)
+        os.makedirs(os.path.dirname(out_abs), exist_ok=True)
+        with open(out_abs, "w", encoding="utf-8") as f:
+            f.write(content)
+        print(f"{C_GREEN}[OK] Laporan berhasil disimpan ke: {out_abs}{C_RESET}")
+
+    print_banner()
+
+    while True:
+        try:
+            cmd_raw = input(f"\n{C_BOLD}{C_CYAN}sidik>{C_RESET} ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print(f"\n{C_CYAN}[*] Menutup konsol SIDIK. Sampai jumpa!{C_RESET}")
+            return 0
+
+        if not cmd_raw:
+            continue
+
+        low = cmd_raw.lower()
+        if low in ("0", "exit", "quit", "q"):
+            print(f"{C_CYAN}[*] Menutup konsol SIDIK. Sampai jumpa!{C_RESET}")
+            return 0
+        elif low in ("menu", "help", "?", "cls", "clear"):
+            if low in ("cls", "clear"):
+                os.system("cls" if sys.platform == "win32" else "clear")
+            print_banner()
+        elif low == "1":
+            t_in = input("  Masukkan path folder/berkas target [default: .]: ").strip() or "."
+            m_in = input("  Pilih mode (all / secret / dep) [default: all]: ").strip().lower() or "all"
+            execute_scan(t_in, sec=(m_in != "dep"), dep=(m_in != "secret"))
+        elif low == "2":
+            execute_scan(os.path.join(base_dir, "dataset", "secrets", "test"), sec=True, dep=False)
+        elif low == "3":
+            execute_scan(os.path.join(base_dir, "dataset", "dependencies_v2", "test"), sec=False, dep=True)
+        elif low == "4":
+            execute_scan(os.path.join(base_dir, "dataset", "external", "_repos"), sec=True, dep=False)
+        elif low == "5":
+            execute_scan(os.path.join(base_dir, "dataset", "external", "_repos"), sec=True, dep=True)
+        elif low == "6":
+            execute_scan(os.path.join(base_dir, "sidik"), sec=True, dep=True)
+        elif low == "7":
+            print(f"  {C_BOLD}[a]{C_RESET} Salin Semua Potongan Kode ({len(last_report.findings) if last_report else 0} flag) ke Clipboard")
+            print(f"  {C_BOLD}[b]{C_RESET} Salin Semua Panduan Remediasi ({len(last_report.findings) if last_report else 0} flag) ke Clipboard")
+            print(f"  {C_BOLD}[c]{C_RESET} Ekspor Laporan ke Berkas (.html, .sarif, .md, .json, .csv)")
+            sub = input("  Pilih aksi [a/b/c]: ").strip().lower()
+            if sub == "a":
+                copy_all_items("code")
+            elif sub == "b":
+                copy_all_items("rem")
+            elif sub == "c":
+                f_out = input("  Nama berkas output [default: results/laporan_sidik.html]: ").strip() or os.path.join(base_dir, "results", "laporan_sidik.html")
+                export_interactive(f_out)
+        elif low == "8":
+            print(f"  {C_BOLD}[a]{C_RESET} Toggle Filter Konteks Leksikal (Saat ini: {'ON' if enable_context else 'OFF'})")
+            print(f"  {C_BOLD}[b]{C_RESET} Toggle Filter Entropi Shannon  (Saat ini: {'ON' if enable_entropy else 'OFF'})")
+            print(f"  {C_BOLD}[c]{C_RESET} Ganti Bahasa Antarmuka         (Saat ini: {lang.upper()})")
+            print(f"  {C_BOLD}[d]{C_RESET} Tampilkan Statistik Basis Data OSV Luring")
+            print(f"  {C_BOLD}[e]{C_RESET} Pasang Git Pre-Commit Hook (.git/hooks/pre-commit)")
+            sub = input("  Pilih pengaturan [a/b/c/d/e]: ").strip().lower()
+            if sub == "a":
+                enable_context = not enable_context
+                print(f"{C_GREEN}[OK] Filter Konteks Leksikal: {'ON' if enable_context else 'OFF'}{C_RESET}")
+            elif sub == "b":
+                enable_entropy = not enable_entropy
+                print(f"{C_GREEN}[OK] Filter Entropi Shannon: {'ON' if enable_entropy else 'OFF'}{C_RESET}")
+            elif sub == "c":
+                lang = "en" if lang == "id" else "id"
+                print_banner()
+            elif sub == "d":
+                from sidik.dependency_analyzer.database import VulnerabilityDatabase
+                db = VulnerabilityDatabase()
+                print(f"  • Total Advisori OSV : {db.advisory_count}")
+                print(f"  • Total Paket PyPI   : {db.package_count}")
+                print(f"  • Sumber Basis Data  : {db.metadata.get('source', 'OSV PyPI')}")
+            elif sub == "e":
+                install_git_hook(".")
+        elif low == "9":
+            print(f"{C_CYAN}[*] Membuka jendela Desktop GUI SIDIK...{C_RESET}")
+            from sidik.gui import main as gui_main
+            gui_main()
+        elif low == "copy code":
+            copy_all_items("code")
+        elif low == "copy rem":
+            copy_all_items("rem")
+        elif low.startswith("export "):
+            export_interactive(cmd_raw[7:].strip())
+        else:
+            # Parse direct CLI command inside the interactive shell
+            try:
+                tokens = shlex.split(cmd_raw, posix=(sys.platform != "win32"))
+                if tokens and tokens[0].lower() in ("sidik", "python"):
+                    tokens = tokens[1:]
+                run_cli_with_args(tokens, exit_on_finish=False)
+            except SystemExit:
+                pass
+            except Exception as e:
+                print(f"{C_RED}[!] Perintah tidak dikenali ({e}). Ketik 'menu' untuk melihat daftar opsi.{C_RESET}")
+
+
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="sidik",
         description="SIDIK: Secret Identification and Dependency Inspection Kit (Lightweight Offline Python SAST & SCA)",
         epilog=(
             "Examples:\n"
+            "  sidik -i                                        # Launch Interactive CLI Console Window (TUI)\n"
             "  sidik .                                         # Scan current directory (secrets + dependencies)\n"
             "  sidik dataset/external --mode secret            # Scan target in secret-only mode\n"
             "  sidik --target . --format sarif -o sidik.sarif  # Export SARIF v2.1.0 for GitHub Code Scanning\n"
@@ -68,6 +348,11 @@ def main():
         "positional_target",
         nargs="*",
         help="Optional positional target path (e.g., 'sidik .' or 'sidik scan .')"
+    )
+    parser.add_argument(
+        "--interactive", "-i", "--cli",
+        action="store_true",
+        help="Launch interactive CLI console window (TUI menu & command shell)"
     )
     parser.add_argument(
         "--target", "-t",
@@ -164,12 +449,26 @@ def main():
         action="store_true",
         help="Show advisory database statistics (size, source, snapshot date), then exit"
     )
+    return parser
 
-    args = parser.parse_args()
+
+def run_cli_with_args(argv: Optional[List[str]] = None, exit_on_finish: bool = True) -> int:
+    _enable_windows_ansi()
+    parser = build_arg_parser()
+    args = parser.parse_args(argv)
+
+    if args.interactive:
+        code = run_interactive_cli(initial_lang=args.lang)
+        if exit_on_finish:
+            sys.exit(code)
+        return code
 
     if args.update_db:
         from sidik.dependency_analyzer import osv_import
-        sys.exit(osv_import.main([]))
+        code = osv_import.main([])
+        if exit_on_finish:
+            sys.exit(code)
+        return code
 
     if args.db_info:
         from sidik.dependency_analyzer.database import VulnerabilityDatabase
@@ -178,7 +477,9 @@ def main():
         print(f"Packages   : {db.package_count}")
         print(f"Source     : {db.metadata.get('source', 'built-in only')}")
         print(f"Snapshot   : {db.metadata.get('generated_utc', 'N/A')}")
-        sys.exit(0)
+        if exit_on_finish:
+            sys.exit(0)
+        return 0
 
     # Resolve positional target (supports `sidik .` or `sidik scan .`)
     target_path = args.target
@@ -189,14 +490,23 @@ def main():
         target_path = pos[0] if pos else "."
 
     if args.install_hook:
-        sys.exit(install_git_hook(target_path or "."))
+        code = install_git_hook(target_path or ".")
+        if exit_on_finish:
+            sys.exit(code)
+        return code
 
+    # If invoked with zero arguments in an interactive terminal, launch the Interactive CLI Console!
     if not target_path:
-        parser.error("Target path is required (e.g., 'sidik .' or 'sidik --target <path>')")
+        if sys.stdin.isatty() and sys.stdout.isatty() and exit_on_finish:
+            code = run_interactive_cli(initial_lang=args.lang)
+            sys.exit(code)
+        parser.error("Target path is required (e.g., 'sidik .' or 'sidik --target <path>' or 'sidik -i')")
 
     if not os.path.exists(target_path):
         print(f"Error: Target path '{target_path}' does not exist.", file=sys.stderr)
-        sys.exit(2)
+        if exit_on_finish:
+            sys.exit(2)
+        return 2
 
     mode_val = (args.mode or "all").lower()
     is_secret_only = args.secret_only or mode_val in ("secret", "secrets")
@@ -302,7 +612,14 @@ def main():
                 has_failure = True
                 break
 
-    sys.exit(1 if has_failure else 0)
+    code = 1 if has_failure else 0
+    if exit_on_finish:
+        sys.exit(code)
+    return code
+
+
+def main():
+    run_cli_with_args()
 
 
 if __name__ == "__main__":

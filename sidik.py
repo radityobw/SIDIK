@@ -1,5 +1,5 @@
 """SIDIK: Secret Identification and Dependency Inspection Kit
-Universal Root Launcher (CLI & Desktop GUI)
+Universal Root Launcher (Desktop GUI, Interactive CLI Window, & One-Shot CLI)
 """
 
 import os
@@ -11,20 +11,19 @@ if BASE_DIR not in sys.path:
 
 
 def run():
-    """Run CLI scanner if arguments provided, or launch Desktop GUI."""
+    """Launch Desktop GUI if no args (or --gui), Interactive CLI Console if --cli/-i, or One-Shot CLI."""
     if len(sys.argv) == 1 or "--gui" in sys.argv:
         if "--gui" in sys.argv:
             sys.argv.remove("--gui")
         try:
             print("[*] Starting SIDIK Desktop GUI (Glassmorphic & Lightweight mode)...")
-            print("[*] Developed by SIDIK Team 🤩✨")
-            print("[*] Tip: To run the CLI scanner directly, use: python sidik.py --target <path>\n")
+            print("[*] Tip: Use 'python sidik.py --cli' for Interactive CLI Window, or 'python sidik.py .' for direct scan.\n")
             from sidik.gui import main as gui_main
             gui_main()
         except Exception as e:
-            print(f"[!] GUI initialization notice ({e}). Falling back to CLI scanner:\n")
-            from sidik.cli import main as cli_main
-            cli_main()
+            print(f"[!] GUI initialization notice ({e}). Falling back to Interactive CLI Console:\n")
+            from sidik.cli import run_interactive_cli
+            run_interactive_cli()
     else:
         from sidik.cli import main as cli_main
         cli_main()
