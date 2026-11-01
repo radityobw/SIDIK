@@ -1,0 +1,7 @@
+- id: sidik-security
+  name: SIDIK Security Scanner (Secrets & Offline SCA)
+  description: Scans Python code for hardcoded secrets and dependency manifests for vulnerable packages offline.
+  entry: python -m sidik.cli --target . --fail-on high --quiet
+  language: python
+  types: [python]
+  pass_filenames: false

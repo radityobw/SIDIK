@@ -1217,6 +1217,16 @@ class SecurityAnalyzerGUI:
         sb_y.pack(side="right", fill="y")
         sb_x.pack(side="bottom", fill="x")
         self.tree.bind("<<TreeviewSelect>>", self._on_select_finding)
+        self.tree.bind("<Button-3>", self._show_tree_context_menu)
+
+        # Global Developer Experience (DX) Keyboard Shortcuts
+        self.root.bind("<Control-f>", lambda _: (self.search_entry.focus_set(), "break")[1])
+        self.root.bind("<Control-F>", lambda _: (self.search_entry.focus_set(), "break")[1])
+        self.root.bind("<F5>", lambda _: self._start_scan())
+        self.root.bind("<Control-r>", lambda _: self._start_scan())
+        self.root.bind("<Control-R>", lambda _: self._start_scan())
+        self.root.bind("<Control-e>", lambda _: self._export_report())
+        self.root.bind("<Control-E>", lambda _: self._export_report())
 
         # Severity color tags
         self.tree.tag_configure("CRITICAL", foreground=COLORS["danger"])
@@ -2397,57 +2407,88 @@ class SecurityAnalyzerGUI:
         self._update_fig_nav_buttons()
         self.root.after(100, self._load_active_figure)
 
-    def _on_select_finding(self, event):
+    def _show_tree_context_menu(self, event):
+        """Displays a right-click developer context menu on the findings table."""
+        row_id = self.tree.identify_row(event.y)
+        if row_id and row_id not in self.tree.selection():
+            self.tree.selection_set(row_id)
+            self.tree.focus(row_id)
+            self._on_select_finding(None)
+
+        menu = tk.Menu(self.root, tearoff=0, bg=COLORS["card"], fg=COLORS["fg"],
+                       activebackground=COLORS["primary_dim"], activeforeground="#ffffff",
+                       font=("Segoe UI", 9))
+        menu.add_command(label=t("btn_copy_snippet"), command=self._copy_active_snippet)
+        menu.add_command(label=t("btn_copy_remediation"), command=self._copy_active_remediation)
+        menu.add_separator()
+        menu.add_command(label=t("btn_copy_all_snippet"), command=self._copy_all_snippets)
+        menu.add_command(label=t("btn_copy_all_remediation"), command=self._copy_all_remediations)
+        menu.add_separator()
+        menu.add_command(label=t("btn_open_folder"), command=self._open_active_finding_folder)
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+
+    def _open_active_finding_folder(self):
         finding = self._get_active_finding()
-        if not finding:
+        if not finding or not finding.file_path:
+            return
+        folder = os.path.dirname(os.path.abspath(finding.file_path))
+        if os.path.isdir(folder):
+            try:
+                os.startfile(folder)
+            except Exception:
+                import subprocess
+                subprocess.Popen(["explorer", folder])
+
+    def _on_select_finding(self, event):
+        selected_list = self._get_selected_findings()
+        if not selected_list:
             return
 
-        cur_lang = get_current_language()
-        remediation_text = finding.remediation
-        if finding.finding_type == "secret" and "rule_id" in finding.metadata:
-            remediation_text = get_secret_remediation(finding.metadata["rule_id"], lang=cur_lang) or finding.remediation
-        elif finding.finding_type == "dependency" and "cve" in finding.metadata:
-            remediation_text = get_dependency_remediation(
-                package_name=finding.metadata.get("package", ""),
-                cve_id=finding.metadata.get("cve", ""),
-                fixed_version=finding.metadata.get("fixed_version"),
-                manifest_file=os.path.basename(finding.file_path) if finding.file_path else None,
-                lang=cur_lang
-            ) or finding.remediation
-
-        sev_val = finding.severity.value if hasattr(finding.severity, "value") else str(finding.severity)
-        conf_val = finding.confidence.value if hasattr(finding.confidence, "value") else str(finding.confidence)
-
         self.detail_text.delete("1.0", tk.END)
-        info = [
-            f"=== [{sev_val}] {finding.title} ===",
-            f"{t('lbl_finding_id')}     {finding.id}",
-            f"{t('lbl_type_category')} {finding.finding_type.upper()} / {finding.category}",
-            f"{t('lbl_severity')}     {sev_val}  (Confidence: {conf_val})",
-            f"{t('lbl_location')}     {finding.file_path} ({t('lbl_line')} {finding.line_number or 'N/A'})",
-            f"{t('lbl_description')}  {finding.description}",
-            ""
-        ]
+        blocks = []
 
-        if finding.snippet:
-            info.append(f"{t('lbl_code_snippet')}")
-            info.append(f"  {finding.snippet}")
-            info.append("")
+        for finding in selected_list[:50]:
+            remediation_text = self._resolve_remediation_text(finding)
+            sev_val = finding.severity.value if hasattr(finding.severity, "value") else str(finding.severity)
+            conf_val = finding.confidence.value if hasattr(finding.confidence, "value") else str(finding.confidence)
 
-        if remediation_text:
-            info.append(t("lbl_remediation_header"))
-            info.append(f"  {remediation_text}")
-            info.append("")
+            info = [
+                f"=== [{sev_val}] {finding.title} ===",
+                f"{t('lbl_finding_id')}     {finding.id}",
+                f"{t('lbl_type_category')} {finding.finding_type.upper()} / {finding.category}",
+                f"{t('lbl_severity')}     {sev_val}  (Confidence: {conf_val})",
+                f"{t('lbl_location')}     {finding.file_path} ({t('lbl_line')} {finding.line_number or 'N/A'})",
+                f"{t('lbl_description')}  {finding.description}",
+                ""
+            ]
 
-        if finding.metadata:
-            info.append(t("lbl_technical_metadata"))
-            for k, v in finding.metadata.items():
-                info.append(f"  - {k}: {v}")
+            if finding.snippet:
+                info.append(f"{t('lbl_code_snippet')}")
+                info.append(f"  {finding.snippet}")
+                info.append("")
 
-        self.detail_text.insert("1.0", "\n".join(info))
+            if remediation_text:
+                info.append(t("lbl_remediation_header"))
+                info.append(f"  {remediation_text}")
+                info.append("")
+
+            if len(selected_list) == 1 and finding.metadata:
+                info.append(t("lbl_technical_metadata"))
+                for k, v in finding.metadata.items():
+                    info.append(f"  - {k}: {v}")
+
+            blocks.append("\n".join(info))
+
+        if len(selected_list) > 50:
+            blocks.append(f"\n... (+{len(selected_list) - 50} more selected findings. Use 'Copy All' to copy all {len(selected_list)} items.)")
+
+        self.detail_text.insert("1.0", ("\n" + ("─" * 72) + "\n\n").join(blocks))
 
     def _export_report(self):
-        """Exports report to Markdown, JSON, or CSV with format selection."""
+        """Exports report to HTML, SARIF v2.1.0, Markdown, JSON, or CSV with format selection."""
         if not self.last_report:
             return
 
@@ -2457,6 +2498,7 @@ class SecurityAnalyzerGUI:
             defaultextension=".html",
             filetypes=[
                 ("Interactive HTML Report (*.html)", "*.html"),
+                ("SARIF v2.1.0 GitHub Code Scanning (*.sarif)", "*.sarif"),
                 ("Markdown Audit Report (*.md)", "*.md"),
                 ("Structured JSON (*.json)", "*.json"),
                 ("CSV Spreadsheet (*.csv)", "*.csv"),
@@ -2470,6 +2512,8 @@ class SecurityAnalyzerGUI:
             cur_lang = get_current_language()
             if fpath.endswith(".html") or fpath.endswith(".htm"):
                 content = ReportFormatter.to_html(self.last_report, lang=cur_lang)
+            elif fpath.endswith(".sarif"):
+                content = ReportFormatter.to_sarif(self.last_report)
             elif fpath.endswith(".json"):
                 content = ReportFormatter.to_json(self.last_report)
             elif fpath.endswith(".csv"):

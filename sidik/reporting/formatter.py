@@ -580,8 +580,150 @@ class ReportFormatter:
 """
 
     @staticmethod
+    def to_sarif(report: ScanReport) -> str:
+        """Formats report as OASIS SARIF v2.1.0 JSON for GitHub Code Scanning / Security tab integration."""
+        rules_map: Dict[str, Dict[str, Any]] = {}
+        results_list = []
+
+        base_dir = report.summary.target_path
+        if os.path.isfile(base_dir):
+            base_dir = os.path.dirname(base_dir)
+
+        sev_to_sarif = {
+            "CRITICAL": ("error", "9.5"),
+            "HIGH": ("error", "8.0"),
+            "MEDIUM": ("warning", "5.5"),
+            "LOW": ("note", "3.0"),
+            "INFO": ("note", "1.0"),
+        }
+
+        for f in report.findings:
+            sev_val = (f.severity.value if hasattr(f.severity, "value") else str(f.severity)).upper()
+            sarif_level, sec_score = sev_to_sarif.get(sev_val, ("warning", "5.0"))
+
+            if f.finding_type == "secret":
+                rule_id = f"SIDIK-{f.metadata.get('rule_id', f.category)}"
+            else:
+                cve = f.metadata.get("cve") or f.metadata.get("advisory_id") or f.category
+                rule_id = f"SIDIK-SCA-{cve}"
+
+            if rule_id not in rules_map:
+                rules_map[rule_id] = {
+                    "id": rule_id,
+                    "name": f.category,
+                    "shortDescription": {"text": f.title},
+                    "fullDescription": {"text": f.description or f.title},
+                    "help": {
+                        "text": f.remediation or f.description or f.title,
+                        "markdown": f"**Remediation:** {f.remediation or 'Review and remediate finding.'}"
+                    },
+                    "defaultConfiguration": {"level": sarif_level},
+                    "properties": {
+                        "tags": ["security", f.finding_type, f.category.lower()],
+                        "security-severity": sec_score,
+                        "precision": "high"
+                    }
+                }
+
+            try:
+                rel_uri = os.path.relpath(f.file_path, base_dir).replace("\\", "/")
+                if rel_uri.startswith(".."):
+                    rel_uri = os.path.basename(f.file_path)
+            except Exception:
+                rel_uri = f.file_path.replace("\\", "/")
+
+            line_no = max(1, int(f.line_number or 1))
+            msg_text = f"{f.title}: {f.description}"
+            if f.remediation:
+                msg_text += f" | Fix: {f.remediation}"
+
+            results_list.append({
+                "ruleId": rule_id,
+                "level": sarif_level,
+                "message": {"text": msg_text},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {
+                                "uri": rel_uri,
+                                "uriBaseId": "%SRCROOT%"
+                            },
+                            "region": {
+                                "startLine": line_no,
+                                "snippet": {"text": f.snippet or ""}
+                            }
+                        }
+                    }
+                ]
+            })
+
+        sarif_doc = {
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "SIDIK",
+                            "fullName": "SIDIK: Secret Identification and Dependency Inspection Kit",
+                            "version": "1.0.0",
+                            "informationUri": "https://github.com/radityobw/SIDIK",
+                            "rules": list(rules_map.values())
+                        }
+                    },
+                    "results": results_list
+                }
+            ]
+        }
+        return json.dumps(sarif_doc, indent=2)
+
+    @staticmethod
+    def to_github_annotations(report: ScanReport, lang: str = "id") -> str:
+        """Formats findings as GitHub Actions workflow commands (::error / ::warning) for inline PR annotations."""
+        from sidik.i18n import get_secret_remediation, get_dependency_remediation
+        base_dir = report.summary.target_path
+        if os.path.isfile(base_dir):
+            base_dir = os.path.dirname(base_dir)
+
+        out_lines = []
+        for f in report.findings:
+            sev_val = (f.severity.value if hasattr(f.severity, "value") else str(f.severity)).upper()
+            cmd = "error" if sev_val in ("CRITICAL", "HIGH") else ("warning" if sev_val == "MEDIUM" else "notice")
+            try:
+                rel_file = os.path.relpath(f.file_path, base_dir).replace("\\", "/")
+                if rel_file.startswith(".."):
+                    rel_file = f.file_path.replace("\\", "/")
+            except Exception:
+                rel_file = f.file_path.replace("\\", "/")
+
+            line_no = max(1, int(f.line_number or 1))
+            rem = f.remediation or ""
+            if f.finding_type == "secret" and "rule_id" in f.metadata:
+                rem = get_secret_remediation(f.metadata["rule_id"], lang=lang) or rem
+            elif f.finding_type == "dependency" and "cve" in f.metadata:
+                rem = get_dependency_remediation(
+                    package_name=f.metadata.get("package", ""),
+                    cve_id=f.metadata.get("cve", ""),
+                    fixed_version=f.metadata.get("fixed_version"),
+                    manifest_file=os.path.basename(f.file_path) if f.file_path else None,
+                    lang=lang
+                ) or rem
+
+            title = f"SIDIK [{sev_val}] {f.title}".replace(",", ";").replace(":", " -")
+            msg = f"{f.description}"
+            if rem:
+                msg += f" | Fix: {rem}"
+            msg = msg.replace("\r", " ").replace("\n", " ")
+            out_lines.append(f"::{cmd} file={rel_file},line={line_no},title={title}::{msg}")
+
+        if not out_lines:
+            out_lines.append("::notice title=SIDIK Security Scan::Clean! Zero hardcoded secrets or vulnerable dependencies detected.")
+        return "\n".join(out_lines)
+
+    @staticmethod
     def to_console_summary(report: ScanReport, lang: str = "en", use_color: Optional[bool] = None) -> str:
         """Renders modern, information-dense CLI output with ANSI styling and actionable remediation blocks."""
+        from sidik.i18n import get_secret_remediation, get_dependency_remediation
         s = report.summary
         is_id = (lang.lower() == "id")
 
@@ -601,9 +743,8 @@ class ReportFormatter:
             C_GREEN = "\033[92m"
             C_CYAN = "\033[96m"
             C_WHITE = "\033[97m"
-            C_BG_DARK = "\033[48;5;236m"
         else:
-            C_RESET = C_BOLD = C_DIM = C_RED = C_YELLOW = C_BLUE = C_GREEN = C_CYAN = C_WHITE = C_BG_DARK = ""
+            C_RESET = C_BOLD = C_DIM = C_RED = C_YELLOW = C_BLUE = C_GREEN = C_CYAN = C_WHITE = ""
 
         # Localized strings
         t_target = "Target:         " if not is_id else "Target:         "
@@ -615,7 +756,7 @@ class ReportFormatter:
         t_sec_unit = "seconds" if not is_id else "detik"
         t_overview = "Findings Overview:" if not is_id else "Ikhtisar Temuan:"
         t_clean = "[OK] Clean! No security issues detected." if not is_id else "[OK] Bersih! Tidak ditemukan masalah keamanan."
-        t_fix_lbl = "Fix / Remediation:" if not is_id else "Solusi / Rekomendasi:"
+        t_fix_lbl = "Fix / Remediation:" if not is_id else "Solusi / Remediasi:"
 
         # Severity breakdown tally
         crit_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "CRITICAL")
@@ -623,14 +764,18 @@ class ReportFormatter:
         med_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "MEDIUM")
         low_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "LOW")
 
-        border_w = 78
+        base_dir = s.target_path
+        if os.path.isfile(base_dir):
+            base_dir = os.path.dirname(base_dir)
+
+        border_w = 82
         lines = [
             f"{C_CYAN}{'=' * border_w}{C_RESET}",
-            f"{C_BOLD}{C_WHITE} SIDIK: Secret Identification and Dependency Inspection Kit{C_RESET}",
+            f"{C_BOLD}{C_WHITE} SIDIK: Secret Identification and Dependency Inspection Kit (v1.0){C_RESET}",
             f"{C_CYAN}{'=' * border_w}{C_RESET}",
             f" {C_DIM}{t_target}{C_RESET} {C_WHITE}{s.target_path}{C_RESET}",
-            f" {C_DIM}{t_files}{C_RESET} {s.total_files_scanned}    {C_DIM}{t_dur}{C_RESET} {s.scan_duration_seconds} {t_sec_unit}",
-            f" {C_DIM}{t_secrets}{C_RESET} {s.total_secrets_found}       {C_DIM}{t_mem}{C_RESET} {s.peak_memory_mb} MB",
+            f" {C_DIM}{t_files}{C_RESET} {s.total_files_scanned:<8} {C_DIM}{t_dur}{C_RESET} {s.scan_duration_seconds} {t_sec_unit}",
+            f" {C_DIM}{t_secrets}{C_RESET} {s.total_secrets_found:<8} {C_DIM}{t_mem}{C_RESET} {s.peak_memory_mb} MB",
             f" {C_DIM}{t_vulns}{C_RESET} {s.total_vulnerabilities_found}",
             f"{C_DIM}{'-' * border_w}{C_RESET}",
             f" {C_BOLD}Status Severity:{C_RESET} "
@@ -654,21 +799,35 @@ class ReportFormatter:
                 else:
                     c_sev = f"{C_BOLD}{C_GREEN}[LOW     ]{C_RESET}"
 
-                loc = f"{f.file_path}:{f.line_number}" if f.line_number else f.file_path
-                lines.append(f" [{idx:02d}] {c_sev} [{f.category:16s}] {f.title} -> {loc}")
+                try:
+                    rel_path = os.path.relpath(f.file_path, base_dir)
+                    if rel_path.startswith(".."):
+                        rel_path = os.path.basename(f.file_path)
+                except Exception:
+                    rel_path = f.file_path
+                loc = f"{rel_path}:{f.line_number}" if f.line_number else rel_path
+                lines.append(f" [{idx:02d}] {c_sev} [{f.category:16s}] {f.title} -> {C_WHITE}{loc}{C_RESET}")
 
-                # Optional snippet and remediation block for rich information density
                 if f.snippet:
                     clean_snip = f.snippet.strip().replace("\n", " ")
-                    if len(clean_snip) > 65:
-                        clean_snip = clean_snip[:62] + "..."
+                    if len(clean_snip) > 95:
+                        clean_snip = clean_snip[:92] + "..."
                     lines.append(f"      {C_DIM}Code:{C_RESET} `{clean_snip}`")
 
-                if f.remediation:
-                    rem_first_line = f.remediation.split(". ")[0] + "."
-                    if len(rem_first_line) > 70:
-                        rem_first_line = rem_first_line[:67] + "..."
-                    lines.append(f"      {C_CYAN}{t_fix_lbl}{C_RESET} {C_DIM}{rem_first_line}{C_RESET}")
+                rem_text = f.remediation
+                if f.finding_type == "secret" and "rule_id" in f.metadata:
+                    rem_text = get_secret_remediation(f.metadata["rule_id"], lang=lang) or rem_text
+                elif f.finding_type == "dependency" and "cve" in f.metadata:
+                    rem_text = get_dependency_remediation(
+                        package_name=f.metadata.get("package", ""),
+                        cve_id=f.metadata.get("cve", ""),
+                        fixed_version=f.metadata.get("fixed_version"),
+                        manifest_file=os.path.basename(f.file_path) if f.file_path else None,
+                        lang=lang
+                    ) or rem_text
+
+                if rem_text:
+                    lines.append(f"      {C_CYAN}{t_fix_lbl}{C_RESET} {rem_text}")
         else:
             lines.append(f" {C_GREEN}{t_clean}{C_RESET}")
 

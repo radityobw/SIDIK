@@ -1,0 +1,77 @@
+name: "SIDIK Security Scanner (Offline SAST & SCA)"
+description: "Zero-network-call Python Secret Detection (3-layer lexical context filter) & 5-manifest Offline SCA (29,208 OSV PyPI advisories)."
+author: "SIDIK Research Team - Universitas Sultan Ageng Tirtayasa"
+
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  target:
+    description: "Target directory or file path to scan"
+    required: false
+    default: "."
+  mode:
+    description: "Scan mode: all, secret, or dep"
+    required: false
+    default: "all"
+  severity:
+    description: "Minimum severity level to report (low, medium, high, critical)"
+    required: false
+    default: "low"
+  fail-on:
+    description: "Severity threshold to fail workflow with exit code 1 (none, any, low, medium, high, critical)"
+    required: false
+    default: "high"
+  lang:
+    description: "Report language: id or en"
+    required: false
+    default: "en"
+  sarif-output:
+    description: "Path to write SARIF v2.1.0 report for GitHub Code Scanning"
+    required: false
+    default: "sidik-results.sarif"
+
+outputs:
+  sarif-file:
+    description: "Generated SARIF v2.1.0 file path"
+    value: ${{ inputs.sarif-output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install SIDIK minimal dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install "packaging>=23.0"
+
+    - name: Generate SARIF v2.1.0 Report
+      shell: bash
+      run: |
+        PYTHONPATH="${{ github.action_path }}" python -m sidik.cli \
+          --target "${{ inputs.target }}" \
+          --mode "${{ inputs.mode }}" \
+          --severity "${{ inputs.severity }}" \
+          --lang "${{ inputs.lang }}" \
+          --format sarif \
+          --output "${{ inputs.sarif-output }}" \
+          --fail-on none \
+          --quiet
+
+    - name: Run SIDIK Inline PR Annotations & Gate Check
+      shell: bash
+      run: |
+        PYTHONPATH="${{ github.action_path }}" python -m sidik.cli \
+          --target "${{ inputs.target }}" \
+          --mode "${{ inputs.mode }}" \
+          --severity "${{ inputs.severity }}" \
+          --lang "${{ inputs.lang }}" \
+          --format github \
+          --fail-on "${{ inputs.fail-on }}" \
+          --quiet

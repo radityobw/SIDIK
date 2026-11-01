@@ -1,0 +1,49 @@
+name: SIDIK Security CI & Self-Audit
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  sidik-audit-and-test:
+    name: Unit Tests & Shift-Left Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "packaging>=23.0"
+
+      - name: Run Regression Unit Tests
+        run: |
+          python -m unittest discover tests -v
+
+      - name: Run SIDIK Self-Audit (Inline Annotations + Job Summary)
+        run: |
+          python -m sidik.cli --target sidik --mode all --format github --fail-on high --lang en
+
+      - name: Generate SARIF v2.1.0 Security Report
+        run: |
+          python -m sidik.cli --target sidik --mode all --format sarif --output sidik-report.sarif --fail-on none
+
+      - name: Upload SARIF Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidik-sarif-report
+          path: sidik-report.sarif

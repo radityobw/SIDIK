@@ -193,3 +193,66 @@ class TestCliThresholdAndDbWiring(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestSarifAndGitHubAnnotations(unittest.TestCase):
+
+    def setUp(self):
+        self.summary = ScanSummary(
+            target_path="/test/project",
+            total_files_scanned=3,
+            total_secrets_found=1,
+            total_vulnerabilities_found=1,
+            scan_duration_seconds=0.02,
+            peak_memory_mb=0.28
+        )
+        self.findings = [
+            Finding(
+                id="SEC-001",
+                finding_type="secret",
+                category="API_KEY",
+                title="AWS Access Key Found",
+                description="Hardcoded AWS Access Key ID exposed.",
+                file_path="/test/project/config.py",
+                line_number=10,
+                snippet='AWS_KEY = "AKIA****CDEF"',
+                severity=SeverityLevel.CRITICAL,
+                confidence=ConfidenceScore.HIGH,
+                remediation="Rotate credential immediately.",
+                metadata={"rule_id": "SEC001"}
+            ),
+            Finding(
+                id="DEP-001",
+                finding_type="dependency",
+                category="VULNERABLE_DEPENDENCY",
+                title="Vulnerable Dependency: requests (CVE-2023-32681)",
+                description="Requests Leaks Proxy-Authorization Headers.",
+                file_path="/test/project/requirements.txt",
+                line_number=4,
+                snippet="requests==2.25.0",
+                severity=SeverityLevel.MEDIUM,
+                confidence=ConfidenceScore.HIGH,
+                remediation="Upgrade requests to >=2.31.0",
+                metadata={"package": "requests", "cve": "CVE-2023-32681", "fixed_version": "2.31.0"}
+            )
+        ]
+        self.report = ScanReport(summary=self.summary, findings=self.findings)
+
+    def test_sarif_v2_1_0_schema(self):
+        import json
+        sarif_str = ReportFormatter.to_sarif(self.report)
+        data = json.loads(sarif_str)
+        self.assertEqual(data["version"], "2.1.0")
+        self.assertEqual(len(data["runs"]), 1)
+        driver = data["runs"][0]["tool"]["driver"]
+        self.assertEqual(driver["name"], "SIDIK")
+        self.assertEqual(len(driver["rules"]), 2)
+        results = data["runs"][0]["results"]
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]["level"], "error")
+        self.assertEqual(results[1]["level"], "warning")
+
+    def test_github_actions_annotations(self):
+        gh_out = ReportFormatter.to_github_annotations(self.report, lang="en")
+        self.assertIn("::error file=config.py,line=10", gh_out)
+        self.assertIn("::warning file=requirements.txt,line=4", gh_out)

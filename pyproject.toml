@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sidik-security"
+version = "1.0.0"
+description = "SIDIK: Secret Identification and Dependency Inspection Kit (Lightweight Offline Python SAST & SCA)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Radityo Budi Waskito"},
+    {name = "Fauzi Nur Ibrahim"},
+    {name = "Raditya Ahmad Pratama"},
+    {name = "Zayyan Fadhlur Rahman"},
+    {name = "Muhammad Fahri Indra Saputra"}
+]
+keywords = ["security", "sast", "sca", "secret-detection", "vulnerability-scanner", "osv", "sarif"]
+dependencies = [
+    "packaging>=26.0.0",
+]
+
+[project.optional-dependencies]
+gui = [
+    "pillow>=12.1.1",
+    "matplotlib>=3.10.0",
+]
+dev = [
+    "python-docx>=1.2.0",
+    "pip-audit>=2.10.0",
+]
+
+[project.scripts]
+sidik = "sidik.cli:main"
+sidik-gui = "sidik.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sidik*"]
+
+[tool.setuptools.package-data]
+"sidik.data" = ["*.json"]
