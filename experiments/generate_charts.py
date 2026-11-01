@@ -256,54 +256,6 @@ def plot_comparative_industry_tools():
     print(f"Saved: {out_path}")
 
 
-def plot_sus_evaluation():
-    """Figure 6: System Usability Scale (SUS) Score Distribution and Questionnaire Response."""
-    sus_file = os.path.join(RESULTS_DIR, "sus_evaluation_results.json")
-    if not os.path.isfile(sus_file):
-        return
-
-    sus_data = json.load(open(sus_file, encoding="utf-8"))
-    scores = [r["sus_score"] for r in sus_data["individual_responses"]]
-    mean_val = sus_data["sus_metrics"]["mean_score"]
-
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10.5, 3.8), dpi=300)
-
-    # Subplot 1: Score distribution with thresholds
-    n, bins, patches = ax1.hist(scores, bins=8, color='#3498db', edgecolor='black', alpha=0.85)
-    ax1.axvline(68.0, color='#e67e22', linestyle='--', linewidth=1.5, label='Acceptable Baseline (68.0)')
-    ax1.axvline(80.3, color='#2ecc71', linestyle='-.', linewidth=1.5, label='Grade A / Excellent (80.3)')
-    ax1.axvline(mean_val, color='#e74c3c', linestyle='-', linewidth=2.0, label=f'Mean Score ({mean_val:.1f})')
-    ax1.set_xlabel('SUS Score (0 - 100)')
-    ax1.set_ylabel('Frequency (Respondents)')
-    ax1.set_title('System Usability Scale (SUS) Score Distribution (N=18)')
-    ax1.grid(axis='y', linestyle='--', alpha=0.5)
-    ax1.legend(loc='upper left', fontsize=8, frameon=True)
-
-    # Subplot 2: Domain-specific Ratings
-    d_items = ['Remediation\nClarity (D1)', 'Bilingual\nUI (D2)', 'Reuse\nIntention (D3)']
-    d_vals = [
-        sus_data['domain_specific_items']['D1_remediation_clarity_mean'],
-        sus_data['domain_specific_items']['D2_bilingual_ui_benefit_mean'],
-        sus_data['domain_specific_items']['D3_reuse_intention_mean']
-    ]
-    b = ax2.bar(d_items, d_vals, color=['#1abc9c', '#3498db', '#9b59b6'], edgecolor='black', width=0.45)
-    ax2.set_ylabel('Mean Likert Score (1.0 - 5.0)')
-    ax2.set_title('Targeted User Experience Evaluation')
-    ax2.set_ylim(0, 5.5)
-    ax2.grid(axis='y', linestyle='--', alpha=0.5)
-
-    for bar in b:
-        h = bar.get_height()
-        ax2.annotate(f"{h:.2f} / 5.0", xy=(bar.get_x() + bar.get_width()/2, h),
-                     xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8, fontweight='bold')
-
-    fig.tight_layout()
-    out_path = os.path.join(FIGURES_DIR, "fig6_sus_evaluation.png")
-    plt.savefig(out_path)
-    plt.close()
-    print(f"Saved: {out_path}")
-
-
 def main():
     exp_file = os.path.join(RESULTS_DIR, "experiment_results.json")
     abl_file = os.path.join(RESULTS_DIR, "ablation_results.json")
@@ -321,7 +273,6 @@ def main():
         plot_ablation_study(abl_data)
 
     plot_comparative_industry_tools()
-    plot_sus_evaluation()
     print("All scientific visualization figures generated successfully in figures/")
 
 

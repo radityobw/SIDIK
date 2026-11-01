@@ -8,8 +8,6 @@ Combines findings from:
 
 Produces:
 - dataset/external/all_candidates.json: deduplicated candidate secrets across all tools
-- dataset/external/annotation_sheet_radityo.json: clean sheet for Annotator 1
-- dataset/external/annotation_sheet_fauzi.json: independent sheet for Annotator 2
 """
 
 import json
@@ -26,8 +24,6 @@ from sidik.secret_detector.detector import SecretDetector
 
 REPOS_PATH = os.path.join(BASE_DIR, "repos.json")
 ALL_CANDIDATES_PATH = os.path.join(BASE_DIR, "all_candidates.json")
-RADITYO_SHEET_PATH = os.path.join(BASE_DIR, "annotation_sheet_radityo.json")
-FAUZI_SHEET_PATH = os.path.join(BASE_DIR, "annotation_sheet_fauzi.json")
 
 VENV_SCRIPTS = os.path.join(SIDIK_ROOT, ".venv", "Scripts")
 GITLEAKS_BIN = os.path.join(VENV_SCRIPTS, "gitleaks.exe")
@@ -174,32 +170,7 @@ def main() -> None:
     with open(ALL_CANDIDATES_PATH, "w", encoding="utf-8") as f:
         json.dump(candidates_list, f, indent=2)
 
-    # Build blank sheets for Radityo and Fauzi
-    def make_sheet(annotator_name: str) -> List[Dict[str, Any]]:
-        sheet = []
-        for c in candidates_list:
-            sheet.append({
-                "candidate_id": c["candidate_id"],
-                "repo": c["repo"],
-                "file": c["file"],
-                "line": c["line"],
-                "snippet": c["snippet"],
-                "detected_by": c["detected_by"],
-                "is_secret": None,  # To be annotated: True or False
-                "annotator": annotator_name,
-                "notes": "",
-            })
-        return sheet
-
-    with open(RADITYO_SHEET_PATH, "w", encoding="utf-8") as f:
-        json.dump(make_sheet("Radityo Budi Waskito"), f, indent=2)
-
-    with open(FAUZI_SHEET_PATH, "w", encoding="utf-8") as f:
-        json.dump(make_sheet("Fauzi Nur Ibrahim"), f, indent=2)
-
-    print(f"Annotation sheets generated:")
-    print(f"  - {RADITYO_SHEET_PATH}")
-    print(f"  - {FAUZI_SHEET_PATH}")
+    print(f"All candidates saved to: {ALL_CANDIDATES_PATH}")
 
 
 if __name__ == "__main__":
