@@ -3,7 +3,13 @@
 import os
 import sys
 import unittest
-from PIL import Image
+
+try:
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    Image = None  # type: ignore[assignment]
+    HAS_PIL = False
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
@@ -32,14 +38,18 @@ class TestLogoIntegration(unittest.TestCase):
             self.assertTrue(os.path.exists(path), f"Asset {asset} must exist in {self.logo_dir}")
             self.assertGreater(os.path.getsize(path), 0, f"Asset {asset} must not be empty")
 
+    @unittest.skipUnless(HAS_PIL, "Pillow (PIL) not installed in this environment")
     def test_icon_file_validity(self):
         """Verifies that the generated ICO file can be opened and parsed by PIL."""
+        assert Image is not None
         ico_path = os.path.join(self.logo_dir, "sidik_icon.ico")
         with Image.open(ico_path) as im:
             self.assertEqual(im.format, "ICO")
 
+    @unittest.skipUnless(HAS_PIL, "Pillow (PIL) not installed in this environment")
     def test_nobg_assets_have_transparency(self):
         """Verifies that all assets with 'nobg' in filename have transparent alpha channels."""
+        assert Image is not None
         nobg_assets = [
             "SIDIK-nobg.png",
             "SIDIK-nobg-dark.png",
@@ -79,9 +89,10 @@ class TestLogoIntegration(unittest.TestCase):
 
         try:
             app = SecurityAnalyzerGUI(root)
-            self.assertIn("app_icon", app._image_refs)
-            self.assertIn("header_logo", app._image_refs)
-            self.assertIn("about_logo", app._image_refs)
+            if HAS_PIL:
+                self.assertIn("app_icon", app._image_refs)
+                self.assertIn("header_logo", app._image_refs)
+                self.assertIn("about_logo", app._image_refs)
             self.assertIn("SIDIK", root.title())
         finally:
             root.destroy()
