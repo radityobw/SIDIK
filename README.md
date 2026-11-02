@@ -1,6 +1,18 @@
 <div align="center">
 
-<br/>
+<img src="logo/SIDIK-nobg-dark.png" alt="SIDIK Logo" width="320"/>
+
+# SIDIK: *Secret Identification and Dependency Inspection Kit*
+
+**Instrumen Analisis Keamanan Statis (*SAST*) & Analisis Komposisi Perangkat Lunak (*SCA*) Luring Terpadu untuk Ekosistem Python**  
+*Unified Offline Static Application Security Testing (SAST) & Software Composition Analysis (SCA) for Python*
+
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3b82f6.svg)](#)
+[![Offline OSV DB](https://img.shields.io/badge/Offline%20OSV%20DB-29%2C208%20Advisories-10b981.svg)](#)
+[![Unit Tests](https://img.shields.io/badge/Unit%20Tests-51%2F51%20Passing-22c55e.svg)](#)
+[![License: MIT](https://img.shields.io/badge/License-MIT-a855f7.svg)](#)
+
+</div>
 
 ---
 
@@ -8,209 +20,183 @@
 
 ## 📌 Ikhtisar Proyek
 
-**SIDIK** (*Secret Identification and Dependency Inspection Kit*) adalah instrumen analisis keamanan statis (*Static Application Security Testing* / SAST) dan analisis komposisi perangkat lunak (*Software Composition Analysis* / SCA) terpadu berbasis Python.
+**SIDIK** (*Secret Identification and Dependency Inspection Kit*) adalah instrumen analisis keamanan statis (*Static Application Security Testing* / SAST) dan analisis komposisi perangkat lunak (*Software Composition Analysis* / SCA) terpadu berbasis Python yang beroperasi **100% secara luring (*offline*)** tanpa mengirim kode sumber ke peladen pihak ketiga (*zero data leakage*).
 
-Dengan menggabungkan analisis konteks leksikal, entropi Shannon, dan basis data kerentanan advisori luring untuk 5 format manifest, **SIDIK** dirancang untuk mendeteksi *hardcoded secrets* dan dependensi rentan secara akurat dengan tingkat alarm palsu (*False Positive Rate* / FPR) yang ditekan hingga **0%** serta *overhead* waktu eksekusi agregat kurang dari **50 milidetik**.
+Dengan mengintegrasikan **12 aturan ekspresi reguler (*regex*) terkurasi**, **kalkulasi entropi informasi Shannon**, dan **penyaringan konteks leksikal** bersama **basis data kerentanan lokal Google OSV (`29.208` rekaman advisori lintas `8.038` paket PyPI)** yang mendukung **5 format manifes Python**, SIDIK dirancang untuk mengatasi masalah kejenuhan peringatan (*alert fatigue*) sekaligus menghilangkan ketergantungan jaringan internet pada *pipeline* CI/CD maupun jaringan terisolasi (*air-gapped*).
 
-Instrumen ini kini dilengkapi dengan **rekomendasi perbaikan praktis (*actionable remediation guidance*)** untuk setiap temuan serta antarmuka **dwi-bahasa dinamis (Bahasa Indonesia & English)** yang dapat dialihkan secara langsung (*instant toggle*) tanpa memuat ulang aplikasi.
+### 👥 Tim Peneliti & Pengembang (Kontribusi Setara / *Equal First Authors*)
+Jurusan Informatika, Fakultas Teknik, Universitas Sultan Ageng Tirtayasa (Untirta):
+1. **Radityo Budi Waskito** (*Corresponding Author* - Orkestrasi *Pipeline* Terpadu, CLI Interaktif, & *GitHub Actions* CI/CD)
+2. **Fauzi Nur Ibrahim** (Mesin Deteksi *Hardcoded Secret* 3 Lapis, Entropi Shannon, & Konteks Leksikal)
+3. **Raditya Ahmad Pratama** (Mesin *Offline SCA* 5 Format Manifes, Evaluator Versi Semantik PEP 440, & Indeks OSV)
+4. **Zayyan Fadhlur Rahman** (Konstruksi Korpus 25 Repositori GitHub Nyata, *Benchmark* SCA v2, & Evaluasi Komparatif)
+5. **Muhammad Fahri Indra Saputra** (*Desktop GUI High-DPI* Dwibahasa, Lokalisasi `i18n`, & Pelaporan 7 Format termasuk SARIF v2.1.0)
 
 ---
 
-## ✨ Fitur-Fitur Utama
+## ✨ Fitur dan Kapabilitas Utama
 
-1. **Deteksi Rahasia Cerdas (*Intelligent Secret Detection*):**
-   - Mendeteksi 12 jenis kredensial sensitif (*AWS Access Keys, Google Cloud API Keys, OpenAI API Keys, Stripe Keys, GitHub PAT, Slack Tokens, JWT, Private Keys, Password Plaintext, Connection Strings*).
-   - Menggunakan kombinasi pola *regular expression*, analisis entropi informasi Shannon, dan penyaringan konteks leksikal berbasis AST/token untuk mengeliminasi alarm palsu (*benign placeholders*, *dummy variables*).
-2. **Analisis Komposisi Perangkat Lunak Luring (*Offline SCA*):**
-   - Mendukung 5 format manifest dependensi Python: `requirements.txt`, `pyproject.toml` (PEP 621 & Poetry), `Pipfile`, `poetry.lock`, dan `setup.py`.
-   - Pencocokan kerentanan luring berbasis basis data advisori CVE lokal tanpa ketergantungan jaringan internet saat pemindaian.
-3. **Detail Temuan & Rekomendasi Perbaikan (*Remediation Guidance*):**
-   - Setiap temuan dilengkapi dengan langkah mitigasi operasional yang jelas, seperti rotasi kunci API, pencabutan token, isolasi ke variabel lingkungan (*environment variables*), atau perintah pembaruan versi paket (`pip install --upgrade ...`).
-4. **Dukungan Dwi-Bahasa Dinamis (*Bilingual Support* ID ↔ EN):**
-   - **Desktop GUI:** Tersedia tombol alih bahasa langsung (`🌐 English (EN)` / `🌐 Indonesia (ID)`) di pojok kanan atas yang langsung memperbarui seluruh teks antarmuka, metrik, tabel, status, dan rekomendasi perbaikan secara instan.
-   - **CLI Scanner:** Tersedia flag `--lang {id,en}` untuk menghasilkan ringkasan konsol atau laporan Markdown dalam bahasa yang diinginkan.
-5. **Desktop GUI Modern, Glassmorphic, & Ringan:**
-   - **Zero-Dependency Glassmorphism:** Menghadirkan efek Windows 11 Acrylic/Mica backdrop, bilah judul gelap (*dark title bar*), dan sudut membulat (*rounded corners*) asli OS via modul standar `ctypes` tanpa library eksternal.
-   - **Pencarian Cepat (*Live Search*) & Filter Multi-Dimensi:** Kolom pencarian kata kunci instan (<1ms) serta filter berdasarkan tingkat bahaya (*Critical, High, Medium, Low*) dan tipe temuan (*Secrets* vs *Dependencies*).
-   - **Kartu Metrik Interaktif:** Kartu metrik tingkat bahaya dapat diklik langsung untuk memfilter tabel temuan.
-   - **Aksi Salin Satu-Klik (*Quick Copy*):** Tombol praktis untuk langsung menyalin rekomendasi remediasi dan potongan kode ke clipboard sistem.
-   - **Ekspor Laporan Multi-Format:** Mendukung ekspor ke format Web Interaktif Mandiri (`.html`), Markdown (`.md`), JSON (`.json`), dan Spreadsheet CSV (`.csv`).
-   - **Startup Instan & Hemat Memori:** 100% pustaka standar Python (`tkinter`/`ttk`), konsumsi RAM hanya ~20 MB dengan peluncuran seketika (<0.2s).
+1. **Deteksi *Hardcoded Secret* 3 Lapis (*Multi-Layer Secret Detection*):**
+   - Mendeteksi 12 kategori kredensial sensitif (`SEC001` - `SEC012`: *AWS Access Key ID*, *Google API Key*, *OpenAI API Key*, *Stripe Live Key*, *GitHub Classic & Fine-Grained PAT*, *Slack Token*, *JSON Web Token*, *Hardcoded Password*, *Database Connection URI*, *Asymmetric Private Key*, dan *Generic High-Entropy Secret*).
+   - Dilengkapi penyaring baris cepat (*fast line pre-check*), kalkulasi entropi Shannon, dan penyaringan konteks leksikal untuk mengeliminasi alarm palsu dari variabel tiruan (*mock*, *dummy*, *example*, *sample*, *test fixture*), UUID, maupun *hash* Git SHA-1.
+2. **Analisis Komposisi Perangkat Lunak Luring (*Offline Multi-Manifest SCA*):**
+   - Mendukung **5 format manifes dependensi Python**: `requirements.txt`, `pyproject.toml` (PEP 621 & Poetry), `Pipfile`, `poetry.lock`, dan `setup.py` (ekstraksi AST aman tanpa eksekusi kode dinamis).
+   - Mengevaluasi spesifikasi versi terkunci (`==`) maupun rentang versi fleksibel (`>=`, `~=`, `<`, `!=`) sesuai standar PEP 440 terhadap **`29.208` rekaman advisori kerentanan PyPI** secara instan tanpa koneksi internet.
+3. **Tiga Mode Antarmuka (*Triple-Interface Ecosystem*):**
+   - **Mode 1 - *One-Shot CLI* & Otomasi CI/CD (`python -m sidik` / `action.yml`):** Mendukung *git pre-commit hook* otomatis (`--install-hook`), ambang batas kegagalan (`--fail-on {any,low,medium,high,critical}`), dan integrasi *GitHub Actions*.
+   - **Mode 2 - *Interactive CLI Menu* (`run_sidik_cli.bat` / `python sidik.py --cli`):** Antarmuka terminal interaktif berbasis menu bernomor yang mudah dioperasikan tanpa menghafal argumen baris perintah.
+   - **Mode 3 - *Desktop GUI High-DPI* Dwibahasa (`run_sidik.bat` / `python sidik.py --gui`):** Antarmuka visual modern bertema gelap (*dark mode*) dengan 5 tombol *preset* korpus riset, pencarian instan (*live search*), penyalinan massal kode & solusi (*bulk copy*), serta tab **Visualisasi & Hasil Riset** yang merender grafik *benchmark* secara adaptif (*auto-resize*).
+4. **Dukungan Dwibahasa Dinamis (*Instant Bilingual Toggle* ID ↔ EN) & Panduan Remediasi:**
+   - Seluruh tampilan GUI, laporan konsol, dan rekomendasi perbaikan spesifik per aturan/CVE dapat dialihkan secara instan antara **Bahasa Indonesia (`id`)** dan **Bahasa Inggris (`en`)**.
+5. **Tujuh Format Ekspor Laporan Standar Industri:**
+   - Mendukung ekspor ke **Konsol Berwarna ANSI** (`console`), **OASIS SARIF v2.1.0** (`sarif` untuk *GitHub Code Scanning*), **GitHub Actions Workflow Annotations** (`github`), **Dasbor Web HTML Mandiri** (`html`), **Markdown** (`markdown`), **JSON Terstruktur** (`json`), dan **Tabel CSV/Spreadsheet** (`csv`).
 6. **Mekanisme Pengecualian Fleksibel (*Whitelist & Ignore Support*):**
-   - Mendukung berkas `.sidikignore` (sintaks pola gitignore) untuk mengecualikan berkas, folder mock, atau test fixtures.
-   - Mendukung penanda komentar inline (`# sidik:ignore`, `# nosec`, `# noqa: sidik`) untuk baris kode pengujian yang disengaja.
-7. **Integrasi CI/CD & Ambang Batas Kegagalan (*Severity Thresholding*):**
-   - Mendukung opsi `--fail-on {any,low,medium,high,critical}` agar alur kerja CI/CD (GitHub Actions/GitLab CI) hanya gagal pada tingkat keparahan yang ditentukan.
-   - Mendukung pemuatan basis data advisori kustom melalui opsi `--db`.
-8. **CLI Modern Sarat Informasi (*Information-Dense ANSI Output*):**
-   - Tampilan terminal berbingkai rapi, pita distribusi tingkat bahaya berwarna, blok rekomendasi terstruktur, dan dukungan opsi `--format {console,json,markdown,csv,html}` serta `--no-color`.
-9. **Bebas Kebocoran Data Evaluasi (*Zero Data Leakage*):**
-   - Dataset pemodelan dipisahkan secara ketat (*train/development, validation, test/benchmark*) dengan label *ground truth* teranotasi manual untuk validitas riset akademis.
+   - Mendukung berkas `.sidikignore` (sintaks pola `.gitignore`) serta komentar penekan sebaris (`# sidik:ignore`, `# nosec`, `# noqa: sidik`).
 
 ---
 
 ## 📁 Struktur Direktori Repositori
 
-```
+```text
 SIDIK/
-├── logo/                     # Identitas Visual & Ikon Aplikasi SIDIK
-│   ├── SIDIK-nobg-dark.png   # Logo transparan adaptif tema gelap (kontras tinggi)
-│   ├── SIDIK-nobg.png        # Logo transparan dengan tipografi (latar terang)
-│   ├── SIDIK-nobg-purelogo-dark.png # Lambang perisai adaptif tema gelap (glow rim)
-│   ├── SIDIK-nobg-purelogo.png # Lambang perisai transparan murni
-│   ├── SIDIK-bg.png          # Logo dengan latar belakang putih solid
-│   ├── SIDIK-purelogo.png    # Lambang perisai resolusi ultra-tinggi (3264x3264)
-│   └── sidik_icon.ico        # Ikon aplikasi Windows multi-resolusi (16x16 - 256x256)
-│
-├── sidik/                    # Core Engine & Modul Paket SIDIK
-│   ├── __init__.py           # Package Metadata & Ekspor Scanner/i18n
-│   ├── __main__.py           # CLI Direct Runner (python -m sidik)
-│   ├── cli.py                # Command Line Interface dengan opsi --lang
-│   ├── core.py               # Unified SecurityScanner pipeline
-│   ├── gui.py                # Desktop GUI dengan Dynamic Language Toggle
-│   ├── i18n.py               # Modul Internasionalisasi (ID & EN) & Remediasi
-│   ├── models.py             # Data models (Finding, ScanSummary, ScanReport)
-│   ├── secret_detector/      # Mesin secret (Regex + Entropi Shannon + Filter Konteks)
-│   ├── dependency_analyzer/  # Mesin SCA luring (Parser 5 format + Basis Data Advisori)
-│   └── reporting/            # Aggregator & Formatter (JSON, Markdown, Konsol)
-│
-├── dataset/                  # Benchmark Dataset & Ground Truth (Zero Data Leakage)
-│   ├── secrets/              # Sampel kode Python (dev, val, test)
-│   ├── dependencies/         # Kasus manifest dependensi (dev, val, test)
-│   └── ground_truth/         # Berkas anotasi label kebenaran (JSON)
-│
-├── experiments/              # Skrip & Protokol Benchmark Evaluasi
-│   ├── baseline_runners.py   # Wrapper Baseline Tool (Regex-only & Pip-audit)
-│   ├── evaluate_metrics.py   # Kalkulator metrik (Precision, Recall, F1, MCC, FPR, FNR)
-│   ├── run_experiments.py    # Runner evaluasi komparatif terotomasi
-│   ├── ablation_study.py     # Runner evaluasi ablasi komponen (Config A, B, C, D)
-│   └── generate_charts.py    # Generator visualisasi grafik metrik (300 DPI)
-│
-├── figures/                  # Diagram dan grafik visualisasi metrik performa
-├── results/                  # Data mentah hasil evaluasi benchmark (JSON)
-├── tests/                    # Pengujian unit & integrasi (23 test cases)
-├── sidik.py                  # Universal Root Launcher (CLI & GUI)
-├── run_sidik.bat             # Launcher Windows satu-klik untuk GUI / CLI
-├── run_sidik.sh              # Launcher Linux & macOS untuk GUI / CLI
-├── requirements.txt          # Dependensi Python pihak ketiga
-└── README.md                 # Dokumentasi proyek dwi-bahasa
+├── logo/                              # Aset identitas visual & ikon aplikasi multi-resolusi
+├── sidik/                             # Paket inti mesin pemindai SIDIK
+│   ├── __init__.py                    # Metadata paket & ekspor publik
+│   ├── __main__.py                    # Titik masuk modul (python -m sidik)
+│   ├── cli.py                         # Antarmuka One-Shot CLI, TUI Interaktif, & Git Hook
+│   ├── core.py                        # Orkestrator SecurityScanner (SAST + SCA terpadu)
+│   ├── gui.py                         # Antarmuka Desktop GUI High-DPI & Visualisasi Riset
+│   ├── i18n.py                        # Mesin lokalisasi dwibahasa (ID/EN) & kamus remediasi
+│   ├── models.py                      # Struktur data (Finding, ScanSummary, ScanReport)
+│   ├── data/
+│   │   └── pypi_advisories.json       # Basis data luring 29.208 advisori OSV (8.038 paket PyPI)
+│   ├── secret_detector/               # Subsistem deteksi kredensial rahasia 3 lapis
+│   │   ├── patterns.py                # 12 aturan ekspresi reguler terkurasi (SEC001-SEC012)
+│   │   ├── entropy.py                 # Kalkulator entropi informasi Shannon
+│   │   ├── context.py                 # Penyaring konteks leksikal & indikator mock/test
+│   │   └── detector.py                # Mesin pemindai secret dengan fast line pre-check
+│   ├── dependency_analyzer/           # Subsistem analisis dependensi luring (Offline SCA)
+│   │   ├── parsers.py                 # Pengurai 5 format manifes (req, toml, Pipfile, lock, setup.py)
+│   │   ├── matcher.py                 # Pencocok rentang versi semantik PEP 440
+│   │   ├── database.py                # Pengelola indeks advisori kerentanan lokal
+│   │   ├── osv_import.py              # Kompilator snapshot Google OSV PyPI ke indeks lokal
+│   │   └── analyzer.py                # Orkestrator pemindaian manifes dependensi
+│   └── reporting/                     # Subsistem agregasi, deduplikasi, & 7 format laporan
+│       ├── aggregator.py              # Penggabung temuan & kalkulator ringkasan keparahan
+│       └── formatter.py               # Generator laporan (Console, SARIF, GitHub, HTML, MD, JSON, CSV)
+├── dataset/                           # Korpus pengujian empiris (Zero Data Leakage)
+│   ├── external/                      # Korpus 25 repositori GitHub nyata (186.876 LOC, 109 kandidat)
+│   ├── dependencies_v2/               # Benchmark SCA v2 (70 manifes rakitan rilis PyPI; 39 berkas uji / N=200)
+│   ├── secrets/                       # Dataset uji terkontrol & studi ablasi secret (N=100 berkas uji)
+│   ├── dependencies/                  # Dataset manifes dependensi v1 (N=60)
+│   └── ground_truth/                  # Anotasi label kebenaran dasar (JSON)
+├── experiments/                       # Skrip otomatis evaluasi ilmiah & komparasi alat industri
+│   ├── run_external_benchmarks.py     # Benchmark 25 repo nyata & komparasi Gitleaks, Bandit, Trivy, pip-audit
+│   ├── run_experiments.py             # Evaluasi dataset terkontrol terhadap baseline internal
+│   ├── ablation_study.py              # Studi ablasi 4 konfigurasi komponen (Konfig A, B, C, D)
+│   ├── evaluate_metrics.py            # Kalkulator metrik (Precision, Recall, F1, MCC, FPR, FNR)
+│   └── generate_charts.py             # Generator grafik publikasi (300 DPI) & bundel visualisasi GUI
+├── figures/                           # Grafik hasil eksperimen (Paper & Dark-Theme GUI Bundle)
+├── results/                           # Rekaman JSON hasil eksperimen & benchmark komparatif
+├── tests/                             # Suite pengujian otomatis (51 unit & integration tests)
+├── action.yml                         # Definisi komposit GitHub Actions untuk integrasi CI/CD
+├── sidik.py                           # Peluncur universal (GUI, Interactive CLI, & One-Shot CLI)
+├── run_sidik.bat                      # Peluncur cepat Desktop GUI (Windows)
+├── run_sidik_cli.bat                  # Peluncur cepat Interactive CLI Menu (Windows)
+├── run_sidik.sh                       # Peluncur lintas platform (Linux / macOS)
+└── requirements.txt                   # Daftar dependensi runtime & visualisasi
 ```
 
 ---
 
-## 🚀 Panduan Penggunaan Cepat (Cross-Platform)
+## 📊 Hasil Evaluasi Empiris & *Benchmark* Komparatif
+
+Seluruh hasil pengujian direkam secara transparan di direktori [`results/`](file:///d:/Downloads/SIDIK-root/SIDIK/results) dan divisualisasikan di [`figures/`](file:///d:/Downloads/SIDIK-root/SIDIK/figures):
+
+### 1. Evaluasi Deteksi *Hardcoded Secret* pada 25 Repositori GitHub Nyata (`186.876` LOC, `1.193` Berkas `.py`, `109` Kandidat)
+> **Catatan Transparansi Korpus:** Ke-25 repositori publik memiliki `0` kebocoran kunci produksi aktif (`TP = 0`; seluruh `109` kandidat adalah kode pengujian/*fixture*/contoh dokumentasi). Oleh karena itu, evaluasi pada korpus ini mengukur ketahanan terhadap alarm palsu (*False Positive Rate* / FPR) dan kecepatan eksekusi.
+
+| Perangkat Pemindai | Versi | *False Positive* (FP) | *True Negative* (TN) | *False Positive Rate* (FPR) | Waktu Pindai *Secret* | Kecepatan (*Throughput*) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Bandit** | `v1.9.4` | 98 | 11 | 89,91% | 25,26 dtk | 7.398 LOC/dtk |
+| *Baseline Regex* | Internal | 14 | 95 | 12,84% | 3,34 dtk | 55.950 LOC/dtk |
+| **SIDIK (Usulan)** | **Terpadu** | **14** | **95** | **12,84% (-85,7% vs Bandit)** | **3,19 dtk** | **58.581 LOC/dtk** |
+| **Gitleaks** | `v8.30.1` | **0** | **109** | **0,00%** | 10,41 dtk | 17.951 LOC/dtk |
+
+* Pada **Pemindaian Terpadu (*Unified Pipeline*: *Secret* + SCA + `tracemalloc`)** lintas 25 repositori nyata, SIDIK menuntaskan pemeriksaan dalam **`4,64 detik`** (`~2,55 detik` jika dipindai sekaligus) dan mengidentifikasi **`302` kerentanan dependensi nyata** pada 45 berkas manifes proyek publik.
+
+### 2. Evaluasi *Software Composition Analysis* (SCA v2) pada Rilis Paket PyPI (`N=200` Entri di `39` Manifes Uji)
+
+| Perangkat SCA | Cakupan Format Manifes | TP | FP | TN | FN | *Precision* | *Recall* | *F1-Score* | Waktu Pindai |
+| :--- | :--- | :-: | :-: | :-: | :-: | :---: | :---: | :---: | :---: |
+| **`pip-audit`** (`v2.10.1`) | `requirements.txt` saja (`N=37`) | 0 | 0 | 20 | 17 | 0,0000 | 0,0000 | 0,0000 | 0,15 dtk |
+| **Trivy** (`v0.76.1`) | Wajib *lockfile* (`N=200`) | 35 | 0 | 100 | 65 | 1,0000 | 0,3500 | 0,5185 | 132,00 dtk |
+| **SIDIK (Usulan)** | **5 Format Lengkap (`N=200`)** | **100** | **0** | **100** | **0** | **1,0000** | **1,0000** | **1,0000** | **0,33 dtk** |
+
+### 3. Studi Ablasi Komponen pada Dataset Uji Terkontrol *Secret* (`N=100` Berkas: `50` Positif, `50` Negatif)
+
+| Konfigurasi Ablasi | *True Positive* (TP) | *False Positive* (FP) | *True Negative* (TN) | *False Negative* (FN) | *Precision* | *Recall* | *F1-Score* | MCC |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Konfig A (*Regex* Saja)** | 45 | 10 | 40 | 5 | 0,8182 | 0,9000 | 0,8572 | 0,7035 |
+| **Konfig B (*Regex* + Konteks)** | 45 | **0** | **50** | 5 | **1,0000** | 0,9000 | **0,9474** | **0,9045** |
+| **Konfig C (*Regex* + Entropi)** | 45 | 10 | 40 | 5 | 0,8182 | 0,9000 | 0,8572 | 0,7035 |
+| **Konfig D (SIDIK Penuh)** | 45 | **0** | **50** | 5 | **1,0000** | 0,9000 | **0,9474** | **0,9045** |
+
+### 4. Profil Transparan Konsumsi Memori (RAM) & Waktu Eksekusi
+* **Alokasi Memori Pemindaian Aktif (*Active Scanning Memory*):** Berkisar **`0,15 MB - 0,91 MB` per repositori** (rerata **`0,39 MB`** per repositori pada 25 proyek GitHub; **`0,13 - 0,21 MB`** pada uji *secret* `N=100`; serta **`1,58 MB`** untuk pemindaian gabungan 25 repositori sekaligus).
+* **Inisialisasi Basis Data OSV Luring (*One-Time DB Index Load*):** Membutuhkan **`116,47 MB`** satu kali di awal (*singleton cache*) saat memuat indeks `29.208` rekaman advisori JSON ke memori.
+
+---
+
+## 🚀 Panduan Penggunaan Cepat (*Quick Start*)
 
 ### 1. Instalasi Dependensi
-
-Pastikan Python 3.10+ telah terpasang di sistem Anda, kemudian pasang dependensi:
-
+Pastikan Python `3.10+` telah terpasang, lalu pasang dependensi:
 ```bash
-# Windows / macOS / Linux
 pip install -r requirements.txt
 ```
 
-> **Catatan Pengguna Linux**: Pada beberapa distribusi Linux (seperti Ubuntu atau Debian), modul Tkinter tidak disertakan secara default dalam paket Python standar. Pasang modul Tkinter dengan:
->
-> ```bash
-> sudo apt install python3-tk
-> ```
-
-### 2. Menjalankan Desktop GUI
-
-Anda dapat menjalankan antarmuka desktop SIDIK dengan perintah:
-
+### 2. Menjalankan *Desktop GUI* (Mode Visual)
 ```bash
-python sidik.py
-# atau
 python sidik.py --gui
+# atau klik dua kali run_sidik.bat pada Windows
+```
+* Gunakan tombol **`🌐 English (EN)` / `🌐 Indonesia (ID)`** di kanan atas untuk mengganti bahasa secara instan.
+* Gunakan 5 tombol **Presets** (`Uji Secrets (N=100)`, `Uji Dependensi v2`, `25 Repo Eksternal (Secret)`, `25 Repo Eksternal (Full)`, `Kode Sumber SIDIK`) untuk mendemonstrasikan hasil riset secara langsung.
+* Buka tab **`Visualisasi & Hasil Riset`** untuk melihat grafik evaluasi RQ1 - RQ4 dan *Master Bundle*.
+
+### 3. Menjalankan *Interactive CLI Menu* (Mode Terminal Interaktif)
+```bash
+python sidik.py --cli
+# atau klik dua kali run_sidik_cli.bat pada Windows
 ```
 
-- **Windows:** Cukup klik dua kali berkas [`run_sidik.bat`](file:///d:/Downloads/SIDIK/run_sidik.bat).
-- **Linux / macOS:** Jalankan skrip shell:
-  ```bash
-  chmod +x run_sidik.sh
-  ./run_sidik.sh
-  ```
-
-#### 🌐 Cara Mengubah Bahasa di GUI:
-
-Pada antarmuka GUI, klik tombol **`🌐 English (EN)`** di pojok kanan atas header. Seluruh teks dashboard, nama tab, label metrik, kolom tabel temuan, status bar, dan kotak dialog akan langsung berganti ke Bahasa Inggris tanpa perlu memulai ulang aplikasi. Klik kembali tombol **`🌐 Indonesia (ID)`** untuk kembali ke Bahasa Indonesia.
-
-### 3. Menjalankan CLI Scanner
-
-SIDIK dapat dijalankan secara langsung melalui command line interface:
-
+### 4. Menjalankan *One-Shot CLI* & Ekspor 7 Format Laporan
 ```bash
-# Pemindaian dengan ringkasan konsol berwarna ANSI (Bahasa Indonesia)
+# Pemindaian standar di terminal (Bahasa Indonesia / Inggris)
 python -m sidik --target dataset/secrets/test --lang id
+python -m sidik --target dataset/dependencies_v2/test --lang en
 
-# Pemindaian dengan ringkasan konsol berwarna ANSI (English)
-python -m sidik --target dataset/secrets/test --lang en
+# Ekspor ke 7 format laporan (console, json, markdown, csv, html, sarif, github)
+python -m sidik --target dataset/external/_repos --format html --output results/audit_report.html
+python -m sidik --target dataset/external/_repos --format sarif --output results/sidik.sarif
 
-# Pemindaian tanpa kode warna (cocok untuk log file CI/CD)
-python -m sidik --target dataset/secrets/test --no-color
-
-# Pemindaian manifest dependensi
-python sidik.py --target dataset/dependencies/test
-
-# Ekspor hasil pemindaian ke berkas CSV Spreadsheet
-python -m sidik --target dataset/dependencies/test --format csv --output results/temuan_keamanan.csv
-
-# Ekspor laporan HTML Interaktif mandiri (bisa dibuka langsung di browser)
-python -m sidik --target dataset/secrets/test --format html --lang id --output results/laporan_audit.html
-
-# Pemindaian dengan ambang batas kegagalan CI/CD (hanya exit code 1 jika ada temuan HIGH atau CRITICAL)
-python -m sidik --target dataset/secrets/test --fail-on high
-
-# Pemindaian dan simpan laporan Markdown dalam Bahasa Indonesia
-python -m sidik --target dataset/secrets/test --format markdown --lang id --output results/laporan_keamanan.md
-
-# Pemindaian dan simpan laporan Markdown dalam Bahasa Inggris
-python -m sidik --target dataset/secrets/test --format markdown --lang en --output results/security_report.md
+# Pasang Git Pre-Commit Hook otomatis & ambang batas CI/CD
+python -m sidik --install-hook
+python -m sidik --target . --fail-on high
 ```
 
-### 4. Menjalankan Pengujian Unit & Integrasi
-
-Seluruh unit test (32 pengujian otomatis) mencakup mesin deteksi, parser dependensi, integritas internasionalisasi (i18n), rekomendasi remediasi, pengecualian (.sidikignore & inline ignore), pelaporan HTML mandiri, dan ambang batas CI/CD:
-
+### 5. Menjalankan 51 *Unit Test* & Eksperimen *Benchmark*
 ```bash
-python -m unittest discover -s tests -p "test_*.py" -v
-```
+# Jalankan seluruh 51 unit & integration tests
+python -m unittest discover tests -v
 
-### 5. Menjalankan Evaluasi Benchmark & Pembuatan Grafik
-
-```bash
-# Evaluasi komparatif terhadap baseline
+# Jalankan eksperimen & buat ulang seluruh grafik riset
 python experiments/run_experiments.py
-
-# Evaluasi uji ablasi komponen (Regex vs Entropi vs Konteks)
 python experiments/ablation_study.py
-
-# Membuat grafik visualisasi hasil riset resolusi tinggi (300 DPI)
+python experiments/run_external_benchmarks.py
 python experiments/generate_charts.py
 ```
-
----
-
-## 📊 Ringkasan Hasil Evaluasi Empiris
-
-Berdasarkan pengujian pada dataset uji (*test set*) independen:
-
-| Kategori Pengujian            | Metrik                              | SIDIK                    | Baseline Konvensional | Keunggulan SIDIK                        |
-| ----------------------------- | ----------------------------------- | ------------------------ | --------------------- | --------------------------------------- |
-| **Secret Detection**    | **Precision**                 | **1.0000 (100%)**  | 0.8182 (81.8%)        | Bebas alarm palsu                       |
-|                               | **Recall**                    | **0.9000 (90.0%)** | 0.9000 (90.0%)        | Cakupan sepadan                         |
-|                               | **F1-Score**                  | **0.9474**         | 0.8571                | Peningkatan signifikan                  |
-|                               | **FPR (False Positive Rate)** | **0.00%**          | **20.00%**      | **Eliminasi 100% false positive** |
-| **Dependency SCA**      | **Precision**                 | **1.0000 (100%)**  | 1.0000 (100%)         | Akurasi tinggi                          |
-|                               | **Recall**                    | **1.0000 (100%)**  | 1.0000 (100%)         | Deteksi menyeluruh                      |
-|                               | **F1-Score**                  | **1.0000**         | 1.0000                | 5 format manifest                       |
-| **Efisiensi Komputasi** | **Total Waktu Eksekusi**      | **49.5 ms**        | 112.4 ms              | **2.27x lebih cepat**             |
-|                               | **Konsumsi Memori Puncak**    | **0.25 MB**        | 14.8 MB               | **59x lebih hemat memori**        |
-
-<br/>
-
----
 
 ---
 
@@ -218,201 +204,31 @@ Berdasarkan pengujian pada dataset uji (*test set*) independen:
 
 ## 📌 Project Overview
 
-**SIDIK** (*Secret Identification and Dependency Inspection Kit*) is a unified, lightweight Static Application Security Testing (SAST) and Software Composition Analysis (SCA) tool for Python applications.
+**SIDIK** (*Secret Identification and Dependency Inspection Kit*) is a unified, lightweight Static Application Security Testing (SAST) and Software Composition Analysis (SCA) instrument for Python projects that operates **100% offline** with **zero data leakage**.
 
-By integrating lexical AST context analysis, Shannon information entropy estimation, and an offline CVE vulnerability advisory database supporting 5 manifest formats, **SIDIK** is engineered to detect hardcoded credentials and vulnerable dependencies with zero false positives (**FPR: 0.00%**) and an aggregate execution latency of under **50 milliseconds**.
-
-SIDIK now features **actionable remediation guidance** for every security finding and a **dynamic dual-language interface (English & Bahasa Indonesia)** that can be toggled instantly without restarting the application.
+By combining **12 curated regular expression rules**, **Shannon entropy verification**, and **lexical context filtering** with an **offline Google OSV advisory database (`29,208` vulnerability records across `8,038` PyPI packages)** supporting **5 Python manifest formats**, SIDIK suppresses false alarms while eliminating network latency and internet dependencies in CI/CD pipelines and air-gapped environments.
 
 ---
 
-## ✨ Core Capabilities
+## ✨ Key Features
 
-1. **Intelligent Secret Detection:**
-   - Detects 12 security categories of hardcoded secrets (*AWS Access Keys, Google Cloud API Keys, OpenAI API Keys, Stripe Keys, GitHub Personal Access Tokens, Slack Tokens, JWTs, Private Keys, Plaintext Passwords, and Database Connection Strings*).
-   - Employs hybrid multi-stage verification: high-precision regex rules, Shannon entropy thresholding, and lexical AST/token filtering to eradicate false alarms from benign placeholders and test fixtures.
-2. **Offline Software Composition Analysis (SCA):**
-   - Supports 5 Python dependency manifest formats: `requirements.txt`, `pyproject.toml` (PEP 621 & Poetry specs), `Pipfile`, `poetry.lock`, and `setup.py`.
-   - Performs offline vulnerability matching against a bundled local CVE database with zero external API calls or network exposure.
-3. **Actionable Remediation Guidance:**
-   - Every detected secret or vulnerable package comes with tailored, step-by-step remediation advice (e.g., immediate API key revocation, environment variable migration, and exact package upgrade commands like `pip install --upgrade ...`).
-4. **Dynamic Dual-Language Support (ID ↔ EN):**
-   - **Desktop GUI:** An interactive language toggle button (`🌐 English (EN)` / `🌐 Indonesia (ID)`) in the header bar updates all labels, tabs, metrics, table headers, status messages, and detail panels instantly in-place.
-   - **CLI Scanner:** A command-line `--lang {id,en}` flag produces localized console summaries and Markdown audit reports.
-5. **Modern, Glassmorphic, & Lightweight Desktop GUI:**
-   - **Zero-Dependency Glassmorphism:** Features native Windows 11 Acrylic/Mica backdrop, immersive dark title bar, and OS rounded corners via Python's built-in `ctypes` library with zero external DLLs or pip packages.
-   - **Live Keyword Search & Multi-Dimensional Filtering:** Instant (<1ms) in-memory search across rules, filenames, and snippets, with dedicated filters for Severity (*Critical, High, Medium, Low*) and Finding Type (*Secrets* vs *Dependencies*).
-   - **Interactive Click-to-Filter Metric Tiles:** Click any severity metric tile to immediately filter findings table.
-   - **One-Click Quick Copy:** Convenient buttons to copy remediation guidance and code snippets directly to the system clipboard.
-   - **Multi-Format Assessment Reports:** Export scan results into Markdown (`.md`), structured JSON (`.json`), or CSV Spreadsheet (`.csv`).
-   - **Instant Startup & Low Footprint:** 100% Python standard library (`tkinter`/`ttk`), ~20 MB RAM footprint, and instant (<0.2s) startup.
-6. **Information-Dense ANSI CLI Output:**
-   - Elegant terminal box frames, severity distribution badge ribbons, inline remediation action cards, `--format csv` export, and `--no-color` support.
-7. **Zero Data Leakage Benchmark Evaluation:**
-   - Strictly partitioned dataset splits (*development, validation, test*) with manual ground-truth annotations to guarantee scientific rigor and reproducibility.
+1. **Three-Layer Secret Detection Engine:**
+   - Covers 12 credential categories (`SEC001` - `SEC012`: AWS, Google Cloud, OpenAI, Stripe, GitHub Classic/Fine-Grained PAT, Slack, JWT, Password Assignments, Database URIs, Private Keys, and Generic Secrets).
+   - Combines a fast line pre-check filter, Shannon entropy calculation, and lexical context analysis to suppress false positives from test fixtures, mock tokens, UUIDs, and Git SHA-1 hashes.
+2. **Offline Multi-Manifest SCA Engine:**
+   - Parses `requirements.txt`, `pyproject.toml` (PEP 621 & Poetry), `Pipfile`, `poetry.lock`, and `setup.py` (static AST parsing without code execution).
+   - Evaluates exact pins (`==`) and semantic version ranges (`>=`, `~=`, `<`) against **`29,208` offline PyPI advisories** in `0.33s`.
+3. **Triple-Interface Ecosystem & 7 Report Formats:**
+   - Operates via **One-Shot CLI** (`python -m sidik`, `--install-hook`, `--fail-on`, GitHub Action `action.yml`), **Interactive CLI Menu** (`python sidik.py --cli`), and **High-DPI Bilingual Desktop GUI** (`python sidik.py --gui`).
+   - Exports findings to **ANSI Console**, **OASIS SARIF v2.1.0**, **GitHub Actions Annotations**, **Standalone HTML Dashboard**, **Markdown**, **JSON**, and **CSV**.
 
 ---
 
-## 📁 Repository Structure
+## 📊 Summary of Empirical Benchmarks
 
-```
-SIDIK/
-├── logo/                     # Brand Identity & Application Icons
-│   ├── SIDIK-nobg-dark.png   # Transparent high-contrast logo (dark mode)
-│   ├── SIDIK-nobg.png        # Transparent logo with typography (light mode)
-│   ├── SIDIK-nobg-purelogo-dark.png # Pure shield emblem with cyan/blue glow rim
-│   ├── SIDIK-nobg-purelogo.png # Pure transparent shield emblem
-│   ├── SIDIK-bg.png          # Solid white background logo
-│   ├── SIDIK-purelogo.png    # Ultra-high-resolution shield emblem (3264x3264)
-│   └── sidik_icon.ico        # Multi-resolution Windows icon (16x16 to 256x256)
-│
-├── sidik/                    # Core Engine & Package Modules
-│   ├── __init__.py           # Package metadata, scanner & i18n exports
-│   ├── __main__.py           # Direct module runner (python -m sidik)
-│   ├── cli.py                # Command Line Interface with --lang flag
-│   ├── core.py               # Unified SecurityScanner pipeline
-│   ├── gui.py                # Desktop GUI with Dynamic Language Toggle
-│   ├── i18n.py               # Internationalization engine (ID & EN) & remediation
-│   ├── models.py             # Data structures (Finding, ScanSummary, ScanReport)
-│   ├── secret_detector/      # Secret engine (Regex + Entropy + Lexical Context)
-│   ├── dependency_analyzer/  # Offline SCA engine (5 manifest parsers + CVE DB)
-│   └── reporting/            # Aggregator & Formatter (JSON, Markdown, Console)
-│
-├── dataset/                  # Evaluation Benchmark Dataset (Zero Data Leakage)
-│   ├── secrets/              # Python code samples (dev, val, test)
-│   ├── dependencies/         # Dependency manifests (dev, val, test)
-│   └── ground_truth/         # Ground truth label annotations (JSON)
-│
-├── experiments/              # Benchmark & Evaluation Protocols
-│   ├── baseline_runners.py   # Baseline tool wrappers (Regex-only & Pip-audit)
-│   ├── evaluate_metrics.py   # Metrics calculator (Precision, Recall, F1, MCC, FPR)
-│   ├── run_experiments.py    # Automated comparative benchmark runner
-│   ├── ablation_study.py     # Component ablation study runner (Config A, B, C, D)
-│   └── generate_charts.py    # 300 DPI publication chart generator
-│
-├── figures/                  # Publication-ready metric figures & diagrams
-├── results/                  # Raw benchmark evaluation results (JSON)
-├── tests/                    # Comprehensive unit & integration tests (23 test cases)
-├── sidik.py                  # Universal Root Launcher (CLI & GUI)
-├── run_sidik.bat             # One-click Windows GUI / CLI launcher
-├── run_sidik.sh              # Linux & macOS launcher script (GUI / CLI)
-├── requirements.txt          # Python dependencies
-└── README.md                 # Bilingual project documentation
-```
-
----
-
-## 🚀 Quick Start Guide (Cross-Platform)
-
-### 1. Installation
-
-Ensure Python 3.10 or higher is installed on your system, then install the dependencies:
-
-```bash
-# Windows / macOS / Linux
-pip install -r requirements.txt
-```
-
-> **Linux Note**: On some Linux distributions (such as Ubuntu or Debian), Tkinter is packaged separately. Install it via:
->
-> ```bash
-> sudo apt install python3-tk
-> ```
-
-### 2. Launching the Desktop GUI
-
-Launch the desktop interface using Python:
-
-```bash
-python sidik.py
-# or
-python sidik.py --gui
-```
-
-- **Windows:** Double-click [`run_sidik.bat`](file:///d:/Downloads/SIDIK/run_sidik.bat).
-- **Linux / macOS:** Execute the shell launcher:
-  ```bash
-  chmod +x run_sidik.sh
-  ./run_sidik.sh
-  ```
-
-#### 🌐 Switching Languages in GUI:
-
-Click the **`🌐 English (EN)`** button located at the top-right corner of the header. All tabs, metrics cards, table headers, status indicators, and remediation panes will instantly switch languages in-place. Click **`🌐 Indonesia (ID)`** to revert to Indonesian.
-
-### 3. Running the CLI Scanner
-
-Run scans directly from your terminal:
-
-```bash
-# Scan with English ANSI colored console output
-python -m sidik --target dataset/secrets/test --lang en
-
-# Scan with Indonesian ANSI colored console output
-python -m sidik --target dataset/secrets/test --lang id
-
-# Scan without color codes (ideal for CI/CD log files)
-python -m sidik --target dataset/secrets/test --no-color
-
-# Scan dependency manifests
-python sidik.py --target dataset/dependencies/test
-
-# Export findings to CSV Spreadsheet
-python -m sidik --target dataset/dependencies/test --format csv --output results/security_findings.csv
-
-# Export scan assessment report as English Markdown
-python -m sidik --target dataset/secrets/test --format markdown --lang en --output results/security_report.md
-
-# Export scan assessment report as Indonesian Markdown
-python -m sidik --target dataset/secrets/test --format markdown --lang id --output results/laporan_keamanan.md
-```
-
-### 4. Running Unit Tests
-
-Execute the full test suite (23 automated test cases covering secret detection, SCA parsing, i18n integrity, remediation, and visual assets):
-
-```bash
-python -m unittest discover -s tests -p "test_*.py" -v
-```
-
-### 5. Running Benchmark Experiments & Generating Charts
-
-```bash
-# Run comparative baseline benchmarks
-python experiments/run_experiments.py
-
-# Run component ablation study (Regex vs Entropy vs Context)
-python experiments/ablation_study.py
-
-# Generate high-resolution publication figures (300 DPI)
-python experiments/generate_charts.py
-```
-
----
-
-## 📊 Empirical Evaluation & Benchmark Summary
-
-Results evaluated on an independent, unseen test benchmark dataset:
-
-| Evaluation Category              | Metric                              | SIDIK                    | Conventional Baseline | Advantage of SIDIK                         |
-| -------------------------------- | ----------------------------------- | ------------------------ | --------------------- | ------------------------------------------ |
-| **Secret Detection**       | **Precision**                 | **1.0000 (100%)**  | 0.8182 (81.8%)        | Zero false positives                       |
-|                                  | **Recall**                    | **0.9000 (90.0%)** | 0.9000 (90.0%)        | Comparable coverage                        |
-|                                  | **F1-Score**                  | **0.9474**         | 0.8571                | Significant performance gain               |
-|                                  | **FPR (False Positive Rate)** | **0.00%**          | **20.00%**      | **100% elimination of false alarms** |
-| **Dependency SCA**         | **Precision**                 | **1.0000 (100%)**  | 1.0000 (100%)         | Reliable vulnerability detection           |
-|                                  | **Recall**                    | **1.0000 (100%)**  | 1.0000 (100%)         | Complete manifest coverage                 |
-|                                  | **F1-Score**                  | **1.0000**         | 1.0000                | 5 manifest formats supported               |
-| **Computational Overhead** | **Aggregate Latency**         | **49.5 ms**        | 112.4 ms              | **2.27x faster execution**           |
-|                                  | **Peak Memory**               | **0.25 MB**        | 14.8 MB               | **59x lower memory footprint**       |
-
----
-
-## 📄 License & Citation
-
-This research instrument is released under the **MIT License**. For academic citations, research replications, or collaboration inquiries, please refer to the project documentation and evaluation scripts in `experiments/`.
-
----
-Contributions are welcome! Please feel free to submit a Pull Request. ❤️
-Zayyan was here
-Raditya was here
+| Benchmark Suite | Dataset Scale | SIDIK Result | Industry / Baseline Comparison |
+| :--- | :--- | :--- | :--- |
+| **1. Real-World GitHub Secret Scan** | 25 Repos (`186,876` LOC, `1,193` files, `109` candidates) | **14 FP (12.84% FPR)** in **3.19s** (`58,581` LOC/s; `4.64s` unified scan with **302** real dependency CVEs) | **85.7% fewer FPs** than Bandit (`98 FP / 89.91%`, `25.26s`); **3.3x faster** than Gitleaks (`0 FP`, `10.41s`) |
+| **2. Multi-Manifest PyPI SCA v2** | `N=200` balanced entries across `39` test manifests (5 formats) | **100/100 TP (Precision 1.00, Recall 1.00, F1 1.00)** in **0.33s** | Outperforms Trivy (`35/100 TP`, `F1 0.5185`, `132.00s`) and `pip-audit` (`0/17 TP` on `N=37` unpinned `requirements.txt`) |
+| **3. Controlled Secret Ablation** | `N=100` Python files (`50` positive, `50` negative traps) | **0 FP, 45 TP (Precision 1.00, Recall 0.90, F1 0.9474, MCC 0.9045)** | Context filter eliminates all **10 FPs** produced by regex-only baseline (`F1 0.8572`) |
+| **4. Memory & Resource Profile** | `tracemalloc` across all benchmarks | **0.15 - 0.91 MB** active scan RAM/repo (avg **0.39 MB**; **1.58 MB** combined 25 repos) | Transparently reports **116.47 MB** one-time initialization for loading the `29,208`-record OSV JSON index |

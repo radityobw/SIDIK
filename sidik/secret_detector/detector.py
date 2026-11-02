@@ -1,12 +1,19 @@
 """Secret detector engine coordinating regex matching, entropy validation, and context filtering."""
 
 import os
+import re
 from typing import List, Optional, Dict, Any
 from sidik.models import Finding, SeverityLevel, ConfidenceScore
 from sidik.secret_detector.patterns import SECRET_PATTERNS
 from sidik.secret_detector.entropy import calculate_shannon_entropy
 from sidik.secret_detector.context import evaluate_line_context
 from sidik.i18n import get_secret_remediation
+
+_FAST_LINE_PRECHECK = re.compile(
+    r"(?i)(?:AKIA|AIza|sk-|sk_live_|ghp_|github_pat_|xox[baprs]-|eyJ|"
+    r"password|passwd|pwd|db_pass|user_pass|://|PRIVATE KEY-----|"
+    r"secret|api_?key|auth_?token|client_?secret|access_?token)"
+)
 
 
 def mask_secret(secret: str) -> str:
@@ -31,8 +38,14 @@ class SecretDetector:
         """Scans source code content string and returns all identified secret findings."""
         findings: List[Finding] = []
         lines = content.splitlines()
+        use_fast_precheck = (self.patterns is SECRET_PATTERNS)
+        specific_patterns = [r for r in self.patterns if r["id"] != "SEC012"]
+        generic_rule = next((r for r in self.patterns if r["id"] == "SEC012"), None)
 
         for line_num, line in enumerate(lines, start=1):
+            if use_fast_precheck and not _FAST_LINE_PRECHECK.search(line):
+                continue
+
             # Check for inline suppression comments (e.g., # sidik:ignore, # nosec)
             line_lower = line.lower()
             if "sidik:ignore" in line_lower or "# nosec" in line_lower or "# noqa: sidik" in line_lower:
@@ -42,10 +55,7 @@ class SecretDetector:
             matched_specific_rule = False
 
             # First pass: check specific rules (SEC001 - SEC011)
-            for rule in self.patterns:
-                if rule["id"] == "SEC012":
-                    continue  # Run generic in second pass if no specific match
-
+            for rule in specific_patterns:
                 matches = rule["pattern"].finditer(line)
                 for match in matches:
                     candidate = match.group(1) if match.groups() else match.group(0)
@@ -93,52 +103,50 @@ class SecretDetector:
                         ))
 
             # Second pass: Generic secret rule (SEC012) if no specific rule matched on this line
-            if not matched_specific_rule:
-                generic_rule = next((r for r in self.patterns if r["id"] == "SEC012"), None)
-                if generic_rule:
-                    matches = generic_rule["pattern"].finditer(line)
-                    for match in matches:
-                        candidate = match.group(1) if match.groups() else match.group(0)
-                        if not candidate:
-                            continue
+            if not matched_specific_rule and generic_rule:
+                matches = generic_rule["pattern"].finditer(line)
+                for match in matches:
+                    candidate = match.group(1) if match.groups() else match.group(0)
+                    if not candidate:
+                        continue
 
-                        entropy = calculate_shannon_entropy(candidate)
-                        is_valid = True
-                        confidence = ConfidenceScore.MEDIUM
-                        meta = {
-                            "rule_id": generic_rule["id"],
-                            "rule_name": generic_rule["name"],
-                            "raw_entropy": entropy
-                        }
+                    entropy = calculate_shannon_entropy(candidate)
+                    is_valid = True
+                    confidence = ConfidenceScore.MEDIUM
+                    meta = {
+                        "rule_id": generic_rule["id"],
+                        "rule_name": generic_rule["name"],
+                        "raw_entropy": entropy
+                    }
 
-                        if self.enable_entropy and not self.enable_context:
-                            if entropy < generic_rule.get("min_entropy", 3.2):
-                                is_valid = False
-                        elif self.enable_context:
-                            is_valid, confidence, context_meta = evaluate_line_context(
-                                candidate=candidate,
-                                line=line,
-                                rule=generic_rule if self.enable_entropy else {"min_entropy": 0.0},
-                                entropy=entropy
-                            )
-                            meta.update(context_meta)
+                    if self.enable_entropy and not self.enable_context:
+                        if entropy < generic_rule.get("min_entropy", 3.2):
+                            is_valid = False
+                    elif self.enable_context:
+                        is_valid, confidence, context_meta = evaluate_line_context(
+                            candidate=candidate,
+                            line=line,
+                            rule=generic_rule if self.enable_entropy else {"min_entropy": 0.0},
+                            entropy=entropy
+                        )
+                        meta.update(context_meta)
 
-                        if is_valid:
-                            finding_id = f"SEC-{generic_rule['id']}-{abs(hash(file_path + str(line_num) + candidate)) % 100000:05d}"
-                            line_findings.append(Finding(
-                                id=finding_id,
-                                finding_type="secret",
-                                category=generic_rule["category"],
-                                title=f"{generic_rule['name']} Found",
-                                description=generic_rule["description"],
-                                file_path=file_path,
-                                line_number=line_num,
-                                snippet=f"Line {line_num}: {line.replace(candidate, mask_secret(candidate)).strip()}",
-                                severity=SeverityLevel(generic_rule["severity"]),
-                                confidence=confidence,
-                                remediation=get_secret_remediation(generic_rule["id"]) or generic_rule.get("remediation"),
-                                metadata=meta
-                            ))
+                    if is_valid:
+                        finding_id = f"SEC-{generic_rule['id']}-{abs(hash(file_path + str(line_num) + candidate)) % 100000:05d}"
+                        line_findings.append(Finding(
+                            id=finding_id,
+                            finding_type="secret",
+                            category=generic_rule["category"],
+                            title=f"{generic_rule['name']} Found",
+                            description=generic_rule["description"],
+                            file_path=file_path,
+                            line_number=line_num,
+                            snippet=f"Line {line_num}: {line.replace(candidate, mask_secret(candidate)).strip()}",
+                            severity=SeverityLevel(generic_rule["severity"]),
+                            confidence=confidence,
+                            remediation=get_secret_remediation(generic_rule["id"]) or generic_rule.get("remediation"),
+                            metadata=meta
+                        ))
 
             findings.extend(line_findings)
 

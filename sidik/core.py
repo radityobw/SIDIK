@@ -142,7 +142,7 @@ class SecurityScanner:
             filename = os.path.basename(target_path).lower()
             if not is_path_ignored(os.path.basename(target_path), all_ignore_patterns):
                 is_sec = self.enable_secret_scan and target_path.endswith((".py", ".env", ".cfg", ".ini", ".json", ".yaml", ".yml", ".txt"))
-                is_dep = self.enable_dependency_scan and any(filename == m or filename.endswith("requirements.txt") for m in MANIFEST_FILENAMES)
+                is_dep = self.enable_dependency_scan and any(filename == m.lower() or filename.endswith("requirements.txt") for m in MANIFEST_FILENAMES)
                 if is_sec or is_dep:
                     candidate_files.append((target_path, os.path.basename(target_path), is_sec, is_dep))
                 else:
@@ -168,7 +168,7 @@ class SecurityScanner:
                     if all_ignore_patterns and is_path_ignored(rel_name, all_ignore_patterns):
                         continue
                     is_sec = self.enable_secret_scan and f_lower.endswith((".py", ".env"))
-                    is_dep = self.enable_dependency_scan and any(f_lower == m or f_lower.endswith("requirements.txt") for m in MANIFEST_FILENAMES)
+                    is_dep = self.enable_dependency_scan and any(f_lower == m.lower() or f_lower.endswith("requirements.txt") for m in MANIFEST_FILENAMES)
                     if is_sec or is_dep:
                         candidate_files.append((full_path, rel_name, is_sec, is_dep))
 

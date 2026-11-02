@@ -5,7 +5,7 @@
   "total_secret_tp": 0,
   "total_secret_fp": 14,
   "total_dep_findings": 302,
-  "total_scan_time_seconds": 24.367,
+  "total_scan_time_seconds": 4.638,
   "case_studies": [
     {
       "no": 1,
@@ -15,8 +15,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 114,
-      "scan_time_seconds": 2.0658,
-      "peak_memory_mb": 116.47
+      "scan_time_seconds": 0.4813,
+      "peak_memory_mb": 0.78
     },
     {
       "no": 2,
@@ -26,8 +26,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 1.3188,
-      "peak_memory_mb": 0.32
+      "scan_time_seconds": 0.1242,
+      "peak_memory_mb": 0.31
     },
     {
       "no": 3,
@@ -37,7 +37,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 84,
-      "scan_time_seconds": 0.1069,
+      "scan_time_seconds": 0.0448,
       "peak_memory_mb": 0.27
     },
     {
@@ -48,7 +48,7 @@
       "secret_tp": 0,
       "secret_fp": 9,
       "dep_findings": 7,
-      "scan_time_seconds": 0.6263,
+      "scan_time_seconds": 0.2869,
       "peak_memory_mb": 0.71
     },
     {
@@ -59,8 +59,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 1.6409,
-      "peak_memory_mb": 0.5
+      "scan_time_seconds": 0.3677,
+      "peak_memory_mb": 0.49
     },
     {
       "no": 6,
@@ -70,7 +70,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 35,
-      "scan_time_seconds": 0.2053,
+      "scan_time_seconds": 0.093,
       "peak_memory_mb": 0.25
     },
     {
@@ -81,7 +81,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.5867,
+      "scan_time_seconds": 0.1182,
       "peak_memory_mb": 0.3
     },
     {
@@ -92,7 +92,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.8533,
+      "scan_time_seconds": 0.2196,
       "peak_memory_mb": 0.36
     },
     {
@@ -103,8 +103,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 1.7441,
-      "peak_memory_mb": 0.54
+      "scan_time_seconds": 0.272,
+      "peak_memory_mb": 0.37
     },
     {
       "no": 10,
@@ -114,7 +114,7 @@
       "secret_tp": 0,
       "secret_fp": 3,
       "dep_findings": 9,
-      "scan_time_seconds": 1.1946,
+      "scan_time_seconds": 0.2711,
       "peak_memory_mb": 0.26
     },
     {
@@ -125,8 +125,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 6,
-      "scan_time_seconds": 0.4676,
-      "peak_memory_mb": 0.35
+      "scan_time_seconds": 0.0928,
+      "peak_memory_mb": 0.34
     },
     {
       "no": 12,
@@ -136,7 +136,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.7709,
+      "scan_time_seconds": 0.2059,
       "peak_memory_mb": 0.46
     },
     {
@@ -147,7 +147,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 16,
-      "scan_time_seconds": 0.5646,
+      "scan_time_seconds": 0.102,
       "peak_memory_mb": 0.47
     },
     {
@@ -158,7 +158,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.123,
+      "scan_time_seconds": 0.0401,
       "peak_memory_mb": 0.15
     },
     {
@@ -169,8 +169,8 @@
       "secret_tp": 0,
       "secret_fp": 2,
       "dep_findings": 4,
-      "scan_time_seconds": 2.4929,
-      "peak_memory_mb": 8.14
+      "scan_time_seconds": 0.2581,
+      "peak_memory_mb": 0.3
     },
     {
       "no": 16,
@@ -180,8 +180,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 1.7236,
-      "peak_memory_mb": 0.51
+      "scan_time_seconds": 0.4245,
+      "peak_memory_mb": 0.52
     },
     {
       "no": 17,
@@ -191,8 +191,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 5,
-      "scan_time_seconds": 2.7095,
-      "peak_memory_mb": 7.34
+      "scan_time_seconds": 0.1197,
+      "peak_memory_mb": 0.25
     },
     {
       "no": 18,
@@ -202,7 +202,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 12,
-      "scan_time_seconds": 0.7707,
+      "scan_time_seconds": 0.0712,
       "peak_memory_mb": 0.28
     },
     {
@@ -213,7 +213,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 1.5526,
+      "scan_time_seconds": 0.2702,
       "peak_memory_mb": 0.31
     },
     {
@@ -224,8 +224,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.3975,
-      "peak_memory_mb": 0.9
+      "scan_time_seconds": 0.1538,
+      "peak_memory_mb": 0.91
     },
     {
       "no": 21,
@@ -235,7 +235,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.6131,
+      "scan_time_seconds": 0.1697,
       "peak_memory_mb": 0.34
     },
     {
@@ -246,7 +246,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.2632,
+      "scan_time_seconds": 0.0749,
       "peak_memory_mb": 0.65
     },
     {
@@ -257,8 +257,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.3708,
-      "peak_memory_mb": 0.37
+      "scan_time_seconds": 0.0622,
+      "peak_memory_mb": 0.2
     },
     {
       "no": 24,
@@ -268,7 +268,7 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 0,
-      "scan_time_seconds": 0.1425,
+      "scan_time_seconds": 0.0582,
       "peak_memory_mb": 0.17
     },
     {
@@ -279,8 +279,8 @@
       "secret_tp": 0,
       "secret_fp": 0,
       "dep_findings": 10,
-      "scan_time_seconds": 1.0618,
-      "peak_memory_mb": 0.43
+      "scan_time_seconds": 0.2559,
+      "peak_memory_mb": 0.27
     }
   ]
 }

@@ -106,7 +106,8 @@ class DependencyAnalyzer:
         findings: List[Finding] = []
         for root, _, files in os.walk(dir_path):
             for file in files:
-                if file.lower() in MANIFEST_FILENAMES or file.lower().endswith("requirements.txt"):
+                f_lower = file.lower()
+                if any(f_lower == m.lower() or f_lower.endswith("requirements.txt") for m in MANIFEST_FILENAMES):
                     full_path = os.path.join(root, file)
                     findings.extend(self.scan_manifest_file(full_path))
         return findings
