@@ -65,6 +65,18 @@ urllib3==1.26.5
         self.assertIn("Finding_ID,Type,Category,Severity", csv_output)
         self.assertIn("Remediation", csv_output)
 
+        # Check HTML Dashboard formatting
+        html_output_en = ReportFormatter.to_html(report, lang="en")
+        self.assertIn("<!DOCTYPE html>", html_output_en)
+        self.assertIn("SIDIK Security Assessment Dashboard", html_output_en)
+        self.assertIn("metrics-grid", html_output_en)
+
+        html_output_id = ReportFormatter.to_html(report, lang="id")
+        self.assertIn("Dasbor Laporan Analisis Keamanan SIDIK", html_output_id)
+        self.assertIn("Berkas Dipindai", html_output_id)
+        self.assertIn("header-logo-img", html_output_id)
+        self.assertIn("data:image/png;base64,", html_output_id)
+
     def test_scan_with_progress_callback(self):
         progress_events = []
 

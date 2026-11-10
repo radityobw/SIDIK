@@ -130,7 +130,7 @@ SECRET_PATTERNS: List[Dict[str, Any]] = [
         "id": "SEC012",
         "name": "Generic High-Entropy Secret Candidate",
         "category": "GENERIC_SECRET",
-        "pattern": re.compile(r"""(?i)(?:secret|api_?key|auth_?token|client_?secret|access_?token)\s*(?:=|:=|:)\s*['"]([a-zA-Z0-9_\-+=/]{16,128})['"]"""),
+        "pattern": re.compile(r"""(?i)(?:[a-zA-Z0-9_]*(?:secret|api_?key|token|auth|credential|client_?secret|access_?token)[a-zA-Z0-9_]*)\s*(?:=|:=|:)\s*['"]([a-zA-Z0-9_\-+=/]{16,128})['"]"""),
         "severity": "MEDIUM",
         "min_entropy": 3.2,
         "description": "Generic variable assignment indicating a potential high-entropy secret string.",

@@ -6,6 +6,7 @@ import csv
 import sys
 import os
 import html
+import base64
 from typing import Dict, Any, Optional
 from sidik.models import ScanReport
 
@@ -833,3 +834,592 @@ class ReportFormatter:
 
         lines.append(f"{C_CYAN}{'=' * border_w}{C_RESET}")
         return "\n".join(lines)
+
+    @staticmethod
+    def to_html(report: ScanReport, lang: str = "en") -> str:
+        """Formats scan report into a self-contained, interactive HTML security assessment dashboard."""
+        from sidik.i18n import get_secret_remediation, get_dependency_remediation
+        s = report.summary
+        is_id = (lang.lower() == "id")
+
+        # Resolve official SIDIK logo as base64 data URI
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        logo_path = os.path.join(base_dir, "logo", "SIDIK-nobg-purelogo-dark.png")
+        logo_data_uri = ""
+        if os.path.exists(logo_path):
+            try:
+                with open(logo_path, "rb") as lf:
+                    b64_logo = base64.b64encode(lf.read()).decode("ascii")
+                logo_data_uri = f"data:image/png;base64,{b64_logo}"
+            except Exception:
+                pass
+
+        if logo_data_uri:
+            logo_html = f'<img src="{logo_data_uri}" alt="SIDIK Logo" class="header-logo-img">'
+            favicon_html = f'<link rel="icon" type="image/png" href="{logo_data_uri}">'
+        else:
+            logo_html = '<div class="logo-badge">🛡️</div>'
+            favicon_html = ''
+
+        # Counts
+        total_findings = len(report.findings)
+        crit_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "CRITICAL")
+        high_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "HIGH")
+        med_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "MEDIUM")
+        low_n = sum(1 for f in report.findings if (f.severity.value if hasattr(f.severity, "value") else str(f.severity)) == "LOW")
+
+        # Translations
+        t_page_title = "Dasbor Laporan Analisis Keamanan SIDIK" if is_id else "SIDIK Security Assessment Dashboard"
+        t_subtitle = "Secret Identification and Dependency Inspection Kit"
+        t_target_path = "Target Path" if is_id else "Target Path"
+        t_timestamp = "Waktu Pemindaian" if is_id else "Scan Timestamp"
+        t_duration = "Durasi" if is_id else "Duration"
+        t_memory = "Puncak Memori" if is_id else "Peak Memory"
+        t_files_scanned = "Berkas Dipindai" if is_id else "Files Scanned"
+        t_total_findings = "Total Temuan" if is_id else "Total Findings"
+        t_secrets_count = "Secrets" if is_id else "Secrets"
+        t_deps_count = "Kerentanan Dependensi" if is_id else "Vulnerabilities"
+
+        t_search_ph = "Cari temuan (rule, file, CVE, kata kunci)..." if is_id else "Search findings (rule, file, CVE, keyword)..."
+        t_all_sev = "Semua Tingkat" if is_id else "All Severities"
+        t_all_types = "Semua Tipe" if is_id else "All Types"
+        t_type_sec = "Kredensial / Secret" if is_id else "Secret"
+        t_type_dep = "Dependensi Rentan" if is_id else "Dependency"
+        t_print_btn = "🖨️ Cetak / Ekspor PDF" if is_id else "🖨️ Print / Save as PDF"
+
+        t_col_num = "#"
+        t_col_id = "ID Temuan" if is_id else "Finding ID"
+        t_col_type = "Tipe" if is_id else "Type"
+        t_col_category = "Kategori" if is_id else "Category"
+        t_col_severity = "Tingkat Bahaya" if is_id else "Severity"
+        t_col_conf = "Confidence" if is_id else "Confidence"
+        t_col_location = "Lokasi Berkas" if is_id else "Location"
+        t_col_detail = "Judul & Deskripsi" if is_id else "Title & Description"
+        t_col_action = "Aksi" if is_id else "Action"
+
+        t_remediation_hdr = "Rekomendasi Perbaikan & Remediasi" if is_id else "Remediation & Action Plan"
+        t_code_hdr = "Potongan Kode / Versi Terdeteksi" if is_id else "Code Snippet / Detected Version"
+        t_meta_hdr = "Metadata Teknis" if is_id else "Technical Metadata"
+        t_clean_msg = "Bersih! Tidak ditemukan kebocoran kredensial atau dependensi rentan." if is_id else "Clean! No security issues detected."
+
+        # Findings rows generator
+        rows_html = []
+        for idx, f in enumerate(report.findings, start=1):
+            sev_str = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
+            conf_str = f.confidence.value if hasattr(f.confidence, "value") else str(f.confidence)
+
+            # Localize remediation
+            remediation_text = f.remediation
+            if f.finding_type == "secret" and "rule_id" in f.metadata:
+                remediation_text = get_secret_remediation(f.metadata["rule_id"], lang=lang) or f.remediation
+            elif f.finding_type == "dependency" and "cve" in f.metadata:
+                remediation_text = get_dependency_remediation(
+                    package_name=f.metadata.get("package", ""),
+                    cve_id=f.metadata.get("cve", ""),
+                    fixed_version=f.metadata.get("fixed_version"),
+                    manifest_file=None,
+                    lang=lang
+                ) or f.remediation
+
+            loc_str = f.file_path
+            loc_display = os.path.basename(f.file_path)
+            if f.line_number:
+                loc_str += f":{f.line_number}"
+                loc_display += f":{f.line_number}"
+
+            # Metadata items
+            meta_chips = []
+            for mk, mv in (f.metadata or {}).items():
+                if mk not in ["snippet", "full_match"] and mv:
+                    meta_chips.append(f"<span class='meta-tag'><strong>{html.escape(str(mk))}:</strong> {html.escape(str(mv))}</span>")
+            meta_html = "".join(meta_chips) if meta_chips else "<span class='text-muted'>-</span>"
+
+            snippet_html = f"<pre class='code-block'><code>{html.escape(f.snippet)}</code></pre>" if f.snippet else "<span class='text-muted'>Tidak ada potongan kode.</span>"
+            remed_html = f"<div class='remediation-box'><strong>🛡️ {t_remediation_hdr}:</strong><p>{html.escape(remediation_text or 'Ikuti panduan rotasi rahasia atau perbarui paket.')}</p></div>"
+
+            row = f"""
+            <tr class="finding-row" data-id="{html.escape(f.id)}" data-type="{html.escape(f.finding_type)}" data-severity="{html.escape(sev_str)}" onclick="toggleDetail('detail-{idx}')">
+                <td class="text-center font-mono">{idx}</td>
+                <td class="font-mono text-cyan"><strong>{html.escape(f.id)}</strong></td>
+                <td class="text-center"><span class="badge badge-{html.escape(f.finding_type)}">{html.escape(f.finding_type.upper())}</span></td>
+                <td><span class="category-chip">{html.escape(f.category)}</span></td>
+                <td class="text-center"><span class="badge badge-{html.escape(sev_str.lower())}">{html.escape(sev_str)}</span></td>
+                <td class="text-center"><span class="conf-badge">{html.escape(conf_str)}</span></td>
+                <td title="{html.escape(loc_str)}"><span class="font-mono text-muted">{html.escape(loc_display)}</span></td>
+                <td>
+                    <div class="finding-title">{html.escape(f.title)}</div>
+                    <div class="finding-desc text-muted">{html.escape(f.description)}</div>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn-toggle" onclick="event.stopPropagation(); toggleDetail('detail-{idx}')">▼</button>
+                </td>
+            </tr>
+            <tr id="detail-{idx}" class="detail-row" style="display:none;">
+                <td colspan="9">
+                    <div class="detail-card">
+                        <div class="detail-section">
+                            <h4>{t_code_hdr}</h4>
+                            {snippet_html}
+                        </div>
+                        <div class="detail-section">
+                            {remed_html}
+                        </div>
+                        <div class="detail-section">
+                            <h4>{t_meta_hdr}</h4>
+                            <div class="meta-container">{meta_html}</div>
+                        </div>
+                        <div class="detail-footer">
+                            <span class="text-muted font-mono">Full Path: {html.escape(loc_str)}</span>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            """
+            rows_html.append(row)
+
+        tbody_content = "\n".join(rows_html) if rows_html else f"<tr><td colspan='9' class='text-center p-8 text-green font-bold'>{t_clean_msg}</td></tr>"
+
+        html_template = f"""<!DOCTYPE html>
+<html lang="{html.escape(lang)}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{html.escape(t_page_title)}</title>
+    {favicon_html}
+    <style>
+        :root {{
+            --bg: #090d16;
+            --card-bg: #111827;
+            --card-border: #1f293d;
+            --card-hover: #1e293b;
+            --fg: #f3f4f6;
+            --fg-muted: #94a3b8;
+            --primary: #0284c7;
+            --primary-glow: #38bdf8;
+            --cyan: #38bdf8;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --warning: #f97316;
+            --warning-bg: rgba(249, 115, 22, 0.15);
+            --medium: #eab308;
+            --medium-bg: rgba(234, 179, 8, 0.15);
+            --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --code-bg: #030712;
+        }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 24px;
+        }}
+        .container {{ max-width: 1400px; margin: 0 auto; }}
+        .header {{
+            background: linear-gradient(180deg, #131c31 0%, var(--card-bg) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+        }}
+        .header-title {{ display: flex; align-items: center; gap: 16px; }}
+        .header-title .header-logo-img {{
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+            border-radius: 8px;
+            display: block;
+        }}
+        .header-title .logo-badge {{
+            background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+            color: #ffffff;
+            font-size: 24px;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }}
+        .header-title h1 {{ font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; }}
+        .header-title p {{ font-size: 13px; color: var(--fg-muted); margin-top: 2px; }}
+        .header-actions {{ display: flex; align-items: center; gap: 12px; }}
+        .btn {{
+            background: var(--card-hover);
+            color: var(--fg);
+            border: 1px solid var(--card-border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }}
+        .btn:hover {{ background: #334155; border-color: var(--primary-glow); color: #fff; }}
+        .metrics-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }}
+        .metric-card {{
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }}
+        .metric-card::before {{
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: var(--primary-glow);
+        }}
+        .metric-card.card-crit::before {{ background: var(--danger); }}
+        .metric-card.card-high::before {{ background: var(--warning); }}
+        .metric-card.card-med::before {{ background: var(--medium); }}
+        .metric-card.card-low::before {{ background: var(--success); }}
+        .metric-lbl {{ font-size: 12px; font-weight: 600; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.5px; }}
+        .metric-val {{ font-size: 28px; font-weight: 800; color: #ffffff; margin-top: 6px; font-family: monospace; }}
+        .metric-sub {{ font-size: 11px; color: var(--fg-muted); margin-top: 4px; }}
+
+        .meta-strip {{
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            font-size: 13px;
+        }}
+        .meta-strip-item {{ display: flex; align-items: center; gap: 8px; }}
+        .meta-strip-item strong {{ color: var(--fg-muted); }}
+
+        .filter-toolbar {{
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }}
+        .search-box {{
+            flex: 1;
+            min-width: 280px;
+            position: relative;
+        }}
+        .search-input {{
+            width: 100%;
+            background: #030712;
+            border: 1px solid var(--card-border);
+            color: #ffffff;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }}
+        .search-input:focus {{ border-color: var(--primary-glow); }}
+        .filter-group {{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }}
+        .pill-filter {{
+            background: #1e293b;
+            color: var(--fg-muted);
+            border: 1px solid transparent;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }}
+        .pill-filter:hover {{ color: #ffffff; background: #334155; }}
+        .pill-filter.active {{ background: var(--primary); color: #ffffff; }}
+
+        .table-card {{
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }}
+        th {{
+            background: #151e30;
+            color: var(--cyan);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--card-border);
+        }}
+        td {{
+            padding: 12px 14px;
+            border-bottom: 1px solid #1a2336;
+            vertical-align: middle;
+        }}
+        .finding-row {{ cursor: pointer; transition: background-color 0.15s; }}
+        .finding-row:hover {{ background-color: rgba(56, 189, 248, 0.05); }}
+        .finding-title {{ font-weight: 600; color: #ffffff; font-size: 13px; }}
+        .finding-desc {{ font-size: 12px; margin-top: 2px; }}
+
+        .badge {{
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+        }}
+        .badge-critical {{ background: var(--danger-bg); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }}
+        .badge-high {{ background: var(--warning-bg); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }}
+        .badge-medium {{ background: var(--medium-bg); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }}
+        .badge-low {{ background: var(--success-bg); color: #4ade80; border: 1px solid rgba(16, 185, 129, 0.3); }}
+        .badge-secret {{ background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }}
+        .badge-dependency {{ background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }}
+        .category-chip {{ background: #1e293b; color: #cbd5e1; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-family: monospace; }}
+        .conf-badge {{ font-size: 11px; color: var(--fg-muted); font-weight: 600; }}
+
+        .btn-toggle {{
+            background: transparent;
+            border: 1px solid #334155;
+            color: var(--fg-muted);
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 10px;
+        }}
+        .btn-toggle:hover {{ background: #334155; color: #ffffff; }}
+
+        .detail-row {{ background: #0c1220; }}
+        .detail-card {{
+            padding: 16px 20px;
+            border-left: 3px solid var(--primary-glow);
+            margin: 6px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }}
+        .detail-section h4 {{ font-size: 12px; font-weight: 700; color: var(--cyan); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
+        .code-block {{
+            background: var(--code-bg);
+            border: 1px solid #1e293b;
+            border-radius: 6px;
+            padding: 10px 14px;
+            overflow-x: auto;
+            color: #38bdf8;
+            font-family: Consolas, Monaco, "Courier New", monospace;
+            font-size: 12px;
+        }}
+        .remediation-box {{
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 6px;
+            padding: 12px 16px;
+            color: #d1fae5;
+        }}
+        .remediation-box strong {{ color: #34d399; font-size: 13px; display: block; margin-bottom: 4px; }}
+        .meta-container {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+        .meta-tag {{ background: #1e293b; border: 1px solid #334155; padding: 3px 8px; border-radius: 4px; font-size: 11px; }}
+        .meta-tag strong {{ color: var(--cyan); }}
+        .detail-footer {{ border-top: 1px solid #1e293b; padding-top: 8px; font-size: 11px; }}
+
+        .font-mono {{ font-family: Consolas, Monaco, "Courier New", monospace; }}
+        .text-center {{ text-align: center; }}
+        .text-cyan {{ color: var(--cyan); }}
+        .text-green {{ color: var(--success); }}
+        .text-muted {{ color: var(--fg-muted); }}
+        .p-8 {{ padding: 32px; }}
+        .font-bold {{ font-weight: 700; }}
+
+        @media print {{
+            body {{ background: #fff; color: #000; padding: 10px; }}
+            .header, .metrics-grid, .meta-strip, .table-card {{ border: 1px solid #ccc; background: #fff; color: #000; box-shadow: none; }}
+            .header-actions, .filter-toolbar, .btn-toggle {{ display: none; }}
+            .code-block {{ background: #f4f4f4; color: #111; border: 1px solid #ddd; }}
+            .remediation-box {{ background: #f0fdf4; color: #065f46; border: 1px solid #bbf7d0; }}
+            th {{ background: #eee; color: #111; }}
+            td {{ border-bottom: 1px solid #ddd; }}
+            .detail-row {{ display: table-row !important; }}
+        }}
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-title">
+            {logo_html}
+            <div>
+                <h1>{html.escape(t_page_title)}</h1>
+                <p>{html.escape(t_subtitle)} &bull; Research Edition</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn" onclick="window.print()">{t_print_btn}</button>
+        </div>
+    </header>
+
+    <!-- Scan Metadata -->
+    <div class="meta-strip">
+        <div class="meta-strip-item"><strong>{t_target_path}:</strong> <code>{html.escape(s.target_path)}</code></div>
+        <div class="meta-strip-item"><strong>{t_timestamp}:</strong> <span>{html.escape(s.timestamp)}</span></div>
+        <div class="meta-strip-item"><strong>{t_duration}:</strong> <span>{s.scan_duration_seconds}s</span></div>
+        <div class="meta-strip-item"><strong>{t_memory}:</strong> <span>{s.peak_memory_mb} MB</span></div>
+    </div>
+
+    <!-- Summary Metric Cards -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-lbl">{t_files_scanned}</div>
+            <div class="metric-val">{s.total_files_scanned}</div>
+            <div class="metric-sub">{s.scan_duration_seconds}s execution</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-lbl">{t_total_findings}</div>
+            <div class="metric-val">{total_findings}</div>
+            <div class="metric-sub">{s.total_secrets_found} {t_secrets_count} &bull; {s.total_vulnerabilities_found} {t_deps_count}</div>
+        </div>
+        <div class="metric-card card-crit">
+            <div class="metric-lbl">CRITICAL</div>
+            <div class="metric-val" style="color:#ef4444;">{crit_n}</div>
+            <div class="metric-sub">Urgent remediation required</div>
+        </div>
+        <div class="metric-card card-high">
+            <div class="metric-lbl">HIGH</div>
+            <div class="metric-val" style="color:#f97316;">{high_n}</div>
+            <div class="metric-sub">High severity security exposure</div>
+        </div>
+        <div class="metric-card card-med">
+            <div class="metric-lbl">MEDIUM</div>
+            <div class="metric-val" style="color:#eab308;">{med_n}</div>
+            <div class="metric-sub">Standard defense-in-depth</div>
+        </div>
+        <div class="metric-card card-low">
+            <div class="metric-lbl">LOW</div>
+            <div class="metric-val" style="color:#10b981;">{low_n}</div>
+            <div class="metric-sub">Low priority / informational</div>
+        </div>
+    </div>
+
+    <!-- Interactive Filtering Toolbar -->
+    <div class="filter-toolbar">
+        <div class="search-box">
+            <input type="text" id="searchInput" class="search-input" placeholder="{t_search_ph}" oninput="filterTable()">
+        </div>
+        <div class="filter-group">
+            <button class="pill-filter active" data-filter="all" onclick="setSeverityFilter('all', this)">{t_all_sev}</button>
+            <button class="pill-filter" data-filter="CRITICAL" onclick="setSeverityFilter('CRITICAL', this)">CRITICAL ({crit_n})</button>
+            <button class="pill-filter" data-filter="HIGH" onclick="setSeverityFilter('HIGH', this)">HIGH ({high_n})</button>
+            <button class="pill-filter" data-filter="MEDIUM" onclick="setSeverityFilter('MEDIUM', this)">MEDIUM ({med_n})</button>
+            <button class="pill-filter" data-filter="LOW" onclick="setSeverityFilter('LOW', this)">LOW ({low_n})</button>
+        </div>
+        <div class="filter-group">
+            <button class="pill-filter active" data-type="all" onclick="setTypeFilter('all', this)">{t_all_types}</button>
+            <button class="pill-filter" data-type="secret" onclick="setTypeFilter('secret', this)">{t_type_sec} ({s.total_secrets_found})</button>
+            <button class="pill-filter" data-type="dependency" onclick="setTypeFilter('dependency', this)">{t_type_dep} ({s.total_vulnerabilities_found})</button>
+        </div>
+    </div>
+
+    <!-- Findings Table -->
+    <div class="table-card">
+        <table id="findingsTable">
+            <thead>
+                <tr>
+                    <th style="width: 45px;" class="text-center">{t_col_num}</th>
+                    <th style="width: 130px;">{t_col_id}</th>
+                    <th style="width: 90px;" class="text-center">{t_col_type}</th>
+                    <th style="width: 140px;">{t_col_category}</th>
+                    <th style="width: 100px;" class="text-center">{t_col_severity}</th>
+                    <th style="width: 90px;" class="text-center">{t_col_conf}</th>
+                    <th style="width: 220px;">{t_col_location}</th>
+                    <th>{t_col_detail}</th>
+                    <th style="width: 50px;" class="text-center">{t_col_action}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {tbody_content}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let activeSev = 'all';
+    let activeType = 'all';
+
+    function toggleDetail(id) {{
+        const row = document.getElementById(id);
+        if (row) {{
+            row.style.display = (row.style.display === 'none' || row.style.display === '') ? 'table-row' : 'none';
+        }}
+    }}
+
+    function setSeverityFilter(sev, btn) {{
+        activeSev = sev;
+        document.querySelectorAll('.filter-group button[data-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterTable();
+    }}
+
+    function setTypeFilter(type, btn) {{
+        activeType = type;
+        document.querySelectorAll('.filter-group button[data-type]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterTable();
+    }}
+
+    function filterTable() {{
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        const rows = document.querySelectorAll('.finding-row');
+
+        rows.forEach(row => {{
+            const id = row.getAttribute('data-id').toLowerCase();
+            const sev = row.getAttribute('data-severity');
+            const type = row.getAttribute('data-type');
+            const text = row.innerText.toLowerCase();
+            const detailId = row.nextElementSibling ? row.nextElementSibling.id : '';
+            const detailRow = detailId ? document.getElementById(detailId) : null;
+
+            const matchesQuery = !query || text.includes(query) || id.includes(query);
+            const matchesSev = (activeSev === 'all' || sev === activeSev);
+            const matchesType = (activeType === 'all' || type === activeType);
+
+            if (matchesQuery && matchesSev && matchesType) {{
+                row.style.display = 'table-row';
+            }} else {{
+                row.style.display = 'none';
+                if (detailRow && detailRow.classList.contains('detail-row')) {{
+                    detailRow.style.display = 'none';
+                }}
+            }}
+        }});
+    }}
+</script>
+</body>
+</html>
+"""
+        return html_template

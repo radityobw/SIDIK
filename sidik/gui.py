@@ -15,6 +15,7 @@ Engineered with Python standard library (tkinter/ttk) and PIL:
 import os
 import sys
 import threading
+import webbrowser
 from typing import Optional, List, Dict, Any, Callable, cast
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
@@ -1307,7 +1308,7 @@ class SecurityAnalyzerGUI:
         paned.pack(fill="both", expand=True, pady=(8, 0))
 
         tree_container = tk.Frame(paned, bg=COLORS["bg"])
-        paned.add(tree_container, height=290)
+        paned.add(tree_container, height=290, minsize=160)
 
         columns = ("id", "type", "category", "severity", "confidence", "location", "title")
         self.tree = ttk.Treeview(tree_container, columns=columns, show="headings",
@@ -1356,7 +1357,7 @@ class SecurityAnalyzerGUI:
         detail_card = tk.Frame(paned, bg=COLORS["card"],
                                highlightthickness=1, highlightbackground=COLORS["card_border"],
                                padx=14, pady=10)
-        paned.add(detail_card, height=200)
+        paned.add(detail_card, height=200, minsize=130)
 
         detail_hdr = tk.Frame(detail_card, bg=COLORS["card"])
         detail_hdr.pack(fill="x", pady=(0, 8))
@@ -2656,7 +2657,7 @@ class SecurityAnalyzerGUI:
         self.detail_text.insert("1.0", ("\n" + ("─" * 72) + "\n\n").join(blocks))
 
     def _export_report(self):
-        """Exports report to HTML, SARIF v2.1.0, Markdown, JSON, or CSV with format selection."""
+        """Exports report to HTML Dashboard, SARIF v2.1.0, Markdown, JSON, or CSV with format selection."""
         if not self.last_report:
             return
 
@@ -2665,7 +2666,7 @@ class SecurityAnalyzerGUI:
             title=t("dialog_export_title"),
             defaultextension=".html",
             filetypes=[
-                ("Interactive HTML Report (*.html)", "*.html"),
+                ("HTML Security Dashboard (*.html)", "*.html"),
                 ("SARIF v2.1.0 GitHub Code Scanning (*.sarif)", "*.sarif"),
                 ("Markdown Audit Report (*.md)", "*.md"),
                 ("Structured JSON (*.json)", "*.json"),
@@ -2693,7 +2694,17 @@ class SecurityAnalyzerGUI:
 
             with open(fpath, "w", encoding="utf-8") as f:
                 f.write(content)
-            messagebox.showinfo(t("dialog_export_success_title"), t("dialog_export_success_body", path=fpath))
+
+            # Inform user and ask if they wish to open HTML in browser
+            if fpath.endswith(".html") or fpath.endswith(".htm"):
+                should_open = messagebox.askyesno(
+                    t("dialog_export_success_title"),
+                    f"{t('dialog_export_success_body', path=fpath)}\n\nBuka dasbor HTML di browser sekarang?"
+                )
+                if should_open:
+                    webbrowser.open(f"file:///{os.path.abspath(fpath)}")
+            else:
+                messagebox.showinfo(t("dialog_export_success_title"), t("dialog_export_success_body", path=fpath))
         except Exception as e:
             messagebox.showerror(t("dialog_export_error_title"), f"{e}")
 
